@@ -3,6 +3,8 @@
  */
 package comp6521;
 
+import static comp6521.Constants.*;
+
 /**
  * @author AmanRana
  *
@@ -10,6 +12,7 @@ package comp6521;
 public class Main {
 
 	public static int mainMemorySize;
+	
 	/**
 	 * @param args
 	 */
@@ -20,8 +23,9 @@ public class Main {
 			return;
 		}
 		
-		mainMemorySize = Integer.parseInt(args[0]);
-		
+		mainMemorySize = Integer.parseInt(args[0])*1024*1024;
+		int bufferSize = mainMemorySize/BLOCK_SIZE;
+		int tuplesInBuffer = bufferSize*TUPLES_IN_BLOCK;
 	}
 
 }
