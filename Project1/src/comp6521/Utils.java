@@ -30,48 +30,24 @@ public class Utils {
 	 *            check whether the sublist belongs to bag 1 or bag 2.
 	 * @throws IOException
 	 */
-	public static void write(List<String> sublist, boolean isBag1) throws IOException {
+	public static void write(List<String> sublist, File file) throws IOException {
 
 		try {
-
-			if (isBag1) {
-
-				File file = new File(Constants.OUTPUT_FILE1_PATH);
-
-				if (!file.exists()) {
-					System.out.println("We had to make a new file.");
-					file.createNewFile();
-				}
-
-				bufferedWriter = new BufferedWriter(new FileWriter(file, true));
-				for (String tuple : sublist) {
-
-					bufferedWriter.write(tuple);
-					bufferedWriter.newLine();
-				}
-
-			} else {
-
-				File file = new File(Constants.OUTPUT_FILE2_PATH);
-
-				if (!file.exists()) {
-					System.out.println("We had to make a new file.");
-					file.createNewFile();
-				}
-
-				bufferedWriter = new BufferedWriter(new FileWriter(file, true));
-				for (String tuple : sublist) {
-
-					bufferedWriter.write(tuple);
-					bufferedWriter.newLine();
-				}
-
+			if (!file.exists()) {
+				System.out.println("We had to make a new file.");
+				file.createNewFile();
 			}
-		} catch (Exception e) {
 
+			bufferedWriter = new BufferedWriter(new FileWriter(file, true));
+			for (String tuple : sublist) {
+
+				bufferedWriter.write(tuple);
+				bufferedWriter.newLine();
+			}
+
+		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-
 			bufferedWriter.close();
 		}
 
@@ -85,10 +61,9 @@ public class Utils {
 	 * @param Filename
 	 * @return
 	 */
-	public static List<String> readFromFile(int startPoint, File Filename) {
-		int recordsToRead = Constants.TUPPLES_IN_BUFFER;
+	public static List<String> readFromFile(int startPoint, File Filename,int recordsToRead) {
 		long startAtByte = 0;
-		long seekToByte = (startPoint == 1 ? 0 : ((startPoint - 1) * (Constants.TUPLE_SIZE_IN_BYTES + 1)));
+		long seekToByte = (startPoint == 1 ? 0 : ((startPoint - 1) * (Constants.TUPLE_SIZE_IN_BYTES + System.lineSeparator().getBytes().length)));
 		List<String> tuples = new ArrayList<>();
 		String line;
 		try {
@@ -114,4 +89,8 @@ public class Utils {
 		return tuples;
 	}
 
+	public static double log2(int n)
+	{
+	    return (Math.log(n) / Math.log(2));
+	}
 }
