@@ -4,7 +4,12 @@
 package comp6521;
 
 import static comp6521.Constants.BLOCK_SIZE;
+import static comp6521.Constants.BUFFER_SIZE;
+import static comp6521.Constants.INPUT_FILE1_PATH;
+import static comp6521.Constants.INPUT_FILE2_PATH;
+import static comp6521.Constants.MAIN_MEMORY_SIZE;
 import static comp6521.Constants.TUPLES_IN_BLOCK;
+import static comp6521.Constants.TUPPLES_IN_BUFFER;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -27,10 +32,6 @@ public class Main {
 	public static void main(String[] args) throws IOException {
 
 		init();
-
-		mainMemorySize = Integer.parseInt(args[0]) * 1024 * 1024; // in bytes
-		int bufferSize = mainMemorySize / BLOCK_SIZE;
-		int tuplesInBuffer = bufferSize * TUPLES_IN_BLOCK;
 
 		// read first file
 		List<String> files;
@@ -63,9 +64,13 @@ public class Main {
 		Properties properties = new Properties();
 		try (FileInputStream fin = new FileInputStream("application.properties")) {
 			properties.load(fin);
-			Constants.MAIN_MEMORY_SIZE = Integer.valueOf(properties.getProperty("MAIN_MEMORY_SIZE")) * 1024 * 1024;
-			Constants.INPUT_FILE1_PATH = properties.getProperty("INPUT_FILE1_PATH");
-			Constants.INPUT_FILE2_PATH = properties.getProperty("INPUT_FILE2_PATH");
+			MAIN_MEMORY_SIZE = Integer.valueOf(properties.getProperty("MAIN_MEMORY_SIZE")) * 1024 * 1024;
+			INPUT_FILE1_PATH = properties.getProperty("INPUT_FILE1_PATH");
+			INPUT_FILE2_PATH = properties.getProperty("INPUT_FILE2_PATH");
+
+			BUFFER_SIZE = MAIN_MEMORY_SIZE / BLOCK_SIZE;
+			TUPPLES_IN_BUFFER = BUFFER_SIZE / TUPLES_IN_BLOCK;
+
 		} catch (FileNotFoundException e) {
 			System.out.println("Input file not found");
 			e.printStackTrace();

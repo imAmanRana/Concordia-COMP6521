@@ -16,5 +16,7 @@ public class Constants {
 	public static String INPUT_FILE1_PATH;
 	public static String INPUT_FILE2_PATH;
 	public static int MAIN_MEMORY_SIZE;
+	public static int BUFFER_SIZE;
+	public static int TUPPLES_IN_BUFFER;
 
 }
