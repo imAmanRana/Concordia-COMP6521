@@ -18,11 +18,8 @@ import java.util.List;
 public class Utils {
 
 	private static BufferedWriter bufferedWriter;
-	private static final String BAG1_OUTPUT_FILE_PATH = "src\\resources\\outputBag1.txt";
-	private static final String BAG2_OUTPUT_FILE_PATH = "src\\resources\\outputBag2.txt";
 
 	private static BufferedReader br;
-	private static List<String> tuples = new ArrayList<>();
 
 	/**
 	 * Writes the sorted sublists to the output bag.
@@ -39,7 +36,7 @@ public class Utils {
 
 			if (isBag1) {
 
-				File file = new File(BAG1_OUTPUT_FILE_PATH);
+				File file = new File(Constants.OUTPUT_FILE1_PATH);
 
 				if (!file.exists()) {
 					System.out.println("We had to make a new file.");
@@ -50,11 +47,12 @@ public class Utils {
 				for (String tuple : sublist) {
 
 					bufferedWriter.write(tuple);
+					bufferedWriter.newLine();
 				}
 
 			} else {
 
-				File file = new File(BAG2_OUTPUT_FILE_PATH);
+				File file = new File(Constants.OUTPUT_FILE2_PATH);
 
 				if (!file.exists()) {
 					System.out.println("We had to make a new file.");
@@ -65,6 +63,7 @@ public class Utils {
 				for (String tuple : sublist) {
 
 					bufferedWriter.write(tuple);
+					bufferedWriter.newLine();
 				}
 
 			}
@@ -78,12 +77,20 @@ public class Utils {
 
 	}
 
-	public static List<String> readFromFile(int startPoint, String Filename) {
-
-		int endpoint = startPoint;
+	/**
+	 * Code reference:
+	 * {@link https://bitsofinfo.wordpress.com/2009/04/15/how-to-read-a-specific-line-from-a-very-large-file-in-java/}
+	 * 
+	 * @param startPoint
+	 * @param Filename
+	 * @return
+	 */
+	public static List<String> readFromFile(int startPoint, File Filename) {
+		int recordsToRead = Constants.TUPPLES_IN_BUFFER;
 		long startAtByte = 0;
 		long seekToByte = (startPoint == 1 ? 0 : ((startPoint - 1) * (Constants.TUPLE_SIZE_IN_BYTES + 1)));
-
+		List<String> tuples = new ArrayList<>();
+		String line;
 		try {
 			RandomAccessFile rand = new RandomAccessFile(Filename, "r");
 			rand.seek(seekToByte);
@@ -93,10 +100,12 @@ public class Utils {
 
 			br = new BufferedReader(new InputStreamReader(new FileInputStream(Filename)));
 			br.skip(startAtByte);
-			while (endpoint - startPoint < 40) {
-				tuples.add(br.readLine());
-				endpoint++;
+			
+			while(recordsToRead>0 && (line=br.readLine())!=null ) {
+				tuples.add(line);
+				recordsToRead--;
 			}
+			
 			br.close();
 		} catch (Exception e) {
 			e.printStackTrace();
