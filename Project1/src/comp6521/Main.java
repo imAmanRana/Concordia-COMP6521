@@ -7,6 +7,8 @@ import static comp6521.Constants.BLOCKS_IN_MEMORY;
 import static comp6521.Constants.BLOCK_SIZE;
 import static comp6521.Constants.INPUT_FILE1_PATH;
 import static comp6521.Constants.INPUT_FILE2_PATH;
+import static comp6521.Constants.INTERMEDIATE_OUTPUT_FILE1_PATH;
+import static comp6521.Constants.INTERMEDIATE_OUTPUT_FILE2_PATH;
 import static comp6521.Constants.MAIN_MEMORY_SIZE;
 import static comp6521.Constants.OUTPUT_FILE1_PATH;
 import static comp6521.Constants.OUTPUT_FILE2_PATH;
@@ -29,129 +31,57 @@ import java.util.Properties;
  */
 public class Main {
 
+	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) throws IOException {
 
+		//read the configuration file
 		init();
 
-		// read first file
+		File inputFile1 = new File(Main.class.getResource("/"+Constants.INPUT_FILE1_PATH).getFile());
+		File inputFile2 = new File(Main.class.getResource("/"+Constants.INPUT_FILE2_PATH).getFile());
+		File outputFile1 = new File(Constants.OUTPUT_FILE1_PATH);
+		File outputFile2 = new File(Constants.OUTPUT_FILE2_PATH);
+		File intermediateOutputFile1 = new File(Constants.INTERMEDIATE_OUTPUT_FILE1_PATH);
+		File intermediateOutputFile2 = new File(Constants.INTERMEDIATE_OUTPUT_FILE2_PATH);
 		
-		int noOfTuplesInR1 = sort(new File(Main.class.getResource(Constants.INPUT_FILE1_PATH).getFile()),new File(Constants.OUTPUT_FILE1_PATH));
+		clearFile(outputFile1);
+		clearFile(outputFile2);
+		clearFile(intermediateOutputFile1);
+		clearFile(intermediateOutputFile2);
 		
-		int noOfTuplesInR2 = sort(new File(Main.class.getResource(Constants.INPUT_FILE2_PATH).getFile()),new File(Constants.OUTPUT_FILE2_PATH));
 		
-		//implement merge
-		int noOfPasses = (int)Math.ceil(Utils.log2((int)Math.ceil((double)noOfTuplesInR1/TUPPLES_IN_BUFFER)));
-		int newSubListSize = Constants.TUPPLES_IN_BUFFER;
-		String readFile,writeFile;
+		// SUBLIST SORTING
+		//file 1
+		int noOfTuplesInR1 = sort(inputFile1,outputFile1);
+		//file 2
+		int noOfTuplesInR2 = sort(inputFile2,outputFile2);
 		
-		List<String> list1;
-		List<String> list2;
-		int linesReadFromList1=0,linesReadFromList2=0;
-		for(int i=1;i<=noOfPasses;i++) {
-			
-			int list1StartPoint=1;
-			int list2StartPoint=1+newSubListSize;
-			if(i%2==1) {
-				readFile = "/output_bag1.txt";
-				writeFile = "/Aman.txt";
-						
-			}else {
-				readFile = "/Aman.txt";
-				writeFile = "/output_bag1.txt";
-			}
-			
-			
-			
-			int noOfSubList = (int)Math.ceil((double)noOfTuplesInR1/newSubListSize);
-			
-			for(int j=1;j<=Math.ceil((double)noOfSubList/2);j++) {
-				
-				//	int noOfTimesToSubList = (int)Math.ceil((double)newSubListSize/(Constants.TUPPLES_IN_BUFFER/4)); 
-				
-				list1= Utils.readFromFile(list1StartPoint, new File(Main.class.getResource(readFile).getPath()), Constants.TUPPLES_IN_BUFFER/4);
-				list2 = Utils.readFromFile(list1StartPoint+newSubListSize, new File(Main.class.getResource(readFile).getPath()), Constants.TUPPLES_IN_BUFFER/4);
-				
-				
-				linesReadFromList1 += list1.size();
-				linesReadFromList2 += list2.size();
-				
-				int ii = 0, jj = 0;
-				List<String> mergedList = new ArrayList<>();
-				while(linesReadFromList1<=newSubListSize && linesReadFromList2<=newSubListSize) {
-				     
-			        // Traverse both array
-			        while (ii<list1.size() && jj <list2.size())
-			        {
-			            // Check if current element of first
-			            // array is smaller than current element
-			            // of second array. If yes, store first
-			            // array element and increment first array
-			            // index. Otherwise do same with second array
-			        	
-			        	if(mergedList.size()==Constants.TUPPLES_IN_BUFFER/2) {
-			        		
-			        		Utils.write(mergedList, new File("A:\\CodingStuff\\git\\Wontons\\Project1\\resources\\"+writeFile));
-			        		mergedList.clear();
-			        		
-			        	}else {
-			        		if (list1.get(ii).compareTo(list2.get(jj))<=0)
-				            	mergedList.add(list1.get(ii++));
-				            else
-				            	mergedList.add(list2.get(jj++));	
-			        	}
-			            
-			        }
-			        
-			        if(ii==list1.size()) {
-			        	list1StartPoint+=Constants.TUPPLES_IN_BUFFER/4;
-						list1= Utils.readFromFile(list1StartPoint, new File(Main.class.getResource(readFile).getPath()), Constants.TUPPLES_IN_BUFFER/4);
-						ii=0;
-						linesReadFromList1+=list1.size();
-			        }else if(jj==list2.size()){
-			        	list2StartPoint+=Constants.TUPPLES_IN_BUFFER/4;
-			        	list2= Utils.readFromFile(list2StartPoint, new File(Main.class.getResource(readFile).getPath()), Constants.TUPPLES_IN_BUFFER/4);
-						jj=0;
-						linesReadFromList2+=list2.size();
-			        }
-					
-					
-				}
-				
-				
-				if(linesReadFromList1<newSubListSize) {
-					while(linesReadFromList1<newSubListSize) {
-						int emptySpace = TUPPLES_IN_BUFFER-mergedList.size()-list1.size();
-						list1.addAll(Utils.readFromFile(list1StartPoint, new File(Main.class.getResource(readFile).getPath()), emptySpace));
-						linesReadFromList1+=emptySpace;
-					}
-				} else {
-					while(linesReadFromList2<newSubListSize) {
-						int emptySpace = TUPPLES_IN_BUFFER-mergedList.size()-list2.size();
-						list2.addAll(Utils.readFromFile(list2StartPoint, new File(Main.class.getResource(readFile).getPath()), emptySpace));
-						linesReadFromList2+=emptySpace;
-					}
-				}
-				
-				
-				list1StartPoint+= newSubListSize;
-				list2StartPoint+= newSubListSize;
-				
-			}
-			newSubListSize*=2;
-		}
+		
+		System.out.println(merge(noOfTuplesInR1,outputFile1,intermediateOutputFile1));
+		System.out.println(merge(noOfTuplesInR2,outputFile2,intermediateOutputFile2));
+		
+	}
+
+	private static void clearFile(File file) throws IOException {
+		PrintWriter writer = new PrintWriter(file);
+		writer.print("");
+		writer.flush();
+		writer.close();
 	}
 
 	private static int sort(File inputFile,File outputFile) throws IOException {
-		List<String> records;
+		List<String> records=null;
 		int readLine=1;
 		int noOfTuples=0;
 		do {
 			records = Utils.readFromFile(readLine, inputFile,Constants.TUPPLES_IN_BUFFER);
-
-			// sort the records
+			
+			/*
+			 * Using Java's in-build sorting method(its much efficient)
+			 */
 			Collections.sort(records);
 
 			// write back to file
@@ -159,39 +89,180 @@ public class Main {
 			readLine+=TUPPLES_IN_BUFFER;
 			noOfTuples+=records.size();
 		} while (records != null && !records.isEmpty());
+		
 		return noOfTuples;
 	}
 
-	private static List<String> merge(List<String> list1,List<String> list2) 
+	private static File merge(int noOfTuples,File file, File intermediateFile) throws IOException 
 	{
+		
+		int noOfPasses = (int)Math.ceil(Utils.log2((int)Math.ceil((double)noOfTuples/TUPPLES_IN_BUFFER)));
+		final int RECORDS_TO_READ = TUPPLES_IN_BUFFER/4;
+		File readFile=null;
+		File writeFile=null;
 		List<String> mergedList = new ArrayList<>();
-		
-		int i = 0, j = 0;
-	     
-        // Traverse both array
-        while (i<list1.size() && j <list2.size())
-        {
-            // Check if current element of first
-            // array is smaller than current element
-            // of second array. If yes, store first
-            // array element and increment first array
-            // index. Otherwise do same with second array
-            if (list1.get(i).compareTo(list2.get(j))<=0)
-            	mergedList.add(list1.get(i++));
-            else
-            	mergedList.add(list2.get(j++));
-        }
-     
-        // Store remaining elements of first array
-        while (i < list1.size())
-            mergedList.add(list1.get(i++));
-     
-        // Store remaining elements of second array
-        while (j < list2.size())
-        	mergedList.add(list2.get(j++));
-		
-		
-		return mergedList;
+		//execute the passes
+		for(int i=1;i<=noOfPasses;i++) {
+			
+			int subListSize = Constants.TUPPLES_IN_BUFFER*i;
+			
+			//decide which file to use for reading and which to use for writing
+			if(i%2==1) {
+				readFile = file;
+				writeFile = intermediateFile;
+			}else {
+				readFile = intermediateFile;
+				writeFile = file;
+			}
+			clearFile(writeFile);
+			//no. of sublists for this pass
+			int noOfSubList = (int)Math.ceil((double)noOfTuples/subListSize);
+			
+			//reading position of sublists
+			int sublist1ReadPosition = 1;
+			int sublist2ReadPosition = 1+subListSize;
+			int recordsRead1=0;
+			int recordsRead2=0;
+			List<String> sublist1;
+			List<String> sublist2;
+			
+			//read 2 sublist at a time and merge them
+			for(int j=1;j<=noOfSubList;j+=2) {
+				
+				//do the merging
+				int x=0;
+				int y=0;
+				
+				sublist1 = Utils.readFromFile(sublist1ReadPosition, readFile, RECORDS_TO_READ);
+				recordsRead1+=sublist1.size();
+				sublist1ReadPosition+=sublist1.size();
+				
+				sublist2 = Utils.readFromFile(sublist2ReadPosition, readFile, RECORDS_TO_READ);
+				recordsRead2+=sublist2.size();
+				sublist2ReadPosition+=sublist2.size();
+				boolean continueLoop=true;
+				while(!sublist1.isEmpty() && !sublist2.isEmpty() && recordsRead1<=subListSize && recordsRead2<=subListSize && continueLoop){
+					
+					while(x<RECORDS_TO_READ && y<RECORDS_TO_READ) {
+						
+						if(sublist1.get(x).compareTo(sublist2.get(y))<=0) {
+							mergedList.add(sublist1.get(x++));
+						}else {
+							mergedList.add(sublist2.get(y++));
+						}
+						
+						if(mergedList.size()==TUPPLES_IN_BUFFER/2) {
+							Utils.write(mergedList, writeFile);
+							mergedList.clear();
+						}
+					}
+					
+					if(x==sublist1.size()) {
+						
+						if(recordsRead1==subListSize) {
+							continueLoop = false;
+						}else {
+							sublist1= Utils.readFromFile(sublist1ReadPosition, readFile, RECORDS_TO_READ);
+							x=0;
+							recordsRead1+=sublist1.size();
+							sublist1ReadPosition+=RECORDS_TO_READ;
+						}
+			        }else if(y==sublist2.size()){
+			        	
+			        	
+			        	if(recordsRead2==subListSize) {
+			        		continueLoop = false;
+			        	}else {
+			        		sublist2= Utils.readFromFile(sublist2ReadPosition, readFile, RECORDS_TO_READ);
+							y=0;
+							recordsRead2+=sublist2.size();
+							sublist2ReadPosition+=RECORDS_TO_READ;
+			        	}
+			        }
+				}
+				
+				//check which list is remaining
+				if(recordsRead1!=subListSize) {
+					
+					int availableMemorySize = Constants.TUPPLES_IN_BUFFER-mergedList.size()-sublist1.size()+x;
+					
+					if((subListSize-recordsRead1)>availableMemorySize) {
+						mergedList.addAll(sublist1.subList(x, sublist1.size()));
+						mergedList.addAll(Utils.readFromFile(sublist1ReadPosition, readFile, availableMemorySize));
+						sublist1ReadPosition+=availableMemorySize;
+						recordsRead1+=availableMemorySize;
+						Utils.write(mergedList, writeFile);
+						mergedList.clear();
+						
+						for(int size = (subListSize-recordsRead1);size>0;size-=TUPPLES_IN_BUFFER) {
+							if(size>=TUPPLES_IN_BUFFER) {
+								sublist1 = Utils.readFromFile(sublist1ReadPosition, readFile, TUPPLES_IN_BUFFER);
+								sublist1ReadPosition+=TUPPLES_IN_BUFFER;
+								recordsRead1+=sublist1.size();
+							}else {
+								sublist1 = Utils.readFromFile(sublist1ReadPosition, readFile, size);
+								sublist1ReadPosition+=size;
+								recordsRead1+=sublist1.size();
+							}
+							Utils.write(sublist1, writeFile);
+						}
+						
+					}else {
+						
+						mergedList.addAll(sublist1.subList(x, sublist1.size()));
+						sublist1 = Utils.readFromFile(sublist1ReadPosition, readFile, (subListSize-recordsRead1));
+						mergedList.addAll(sublist1);
+						Utils.write(mergedList, writeFile);
+						mergedList.clear();
+						recordsRead1+=sublist1.size();
+						sublist1ReadPosition+=sublist1.size();
+						
+					}
+				}else {
+					int availableMemorySize = Constants.TUPPLES_IN_BUFFER-mergedList.size()-sublist2.size()+y;
+					
+					if((subListSize-recordsRead2)>availableMemorySize) {
+						mergedList.addAll(sublist2.subList(y, sublist2.size()));
+						mergedList.addAll(Utils.readFromFile(sublist2ReadPosition, readFile, availableMemorySize));
+						sublist2ReadPosition+=availableMemorySize;
+						recordsRead2+=availableMemorySize;
+						Utils.write(mergedList, writeFile);
+						mergedList.clear();
+						
+						for(int size = (subListSize-recordsRead2);size>0;size-=TUPPLES_IN_BUFFER) {
+							if(size>=TUPPLES_IN_BUFFER) {
+								sublist2 = Utils.readFromFile(sublist2ReadPosition, readFile, TUPPLES_IN_BUFFER);
+								sublist2ReadPosition+=TUPPLES_IN_BUFFER;
+								recordsRead2+=sublist2.size();
+							}else {
+								sublist2 = Utils.readFromFile(sublist2ReadPosition, readFile, size);
+								sublist2ReadPosition+=size;
+								recordsRead2+=sublist2.size();
+							}
+							Utils.write(sublist2, writeFile);
+						}
+						
+					}else {
+						mergedList.addAll(sublist2.subList(y, sublist2.size()));
+						sublist2 = Utils.readFromFile(sublist2ReadPosition, readFile, (subListSize-recordsRead2));
+						mergedList.addAll(sublist2);
+						Utils.write(mergedList, writeFile);
+						mergedList.clear();
+						recordsRead2+=sublist2.size();
+						sublist2ReadPosition+=sublist2.size();
+					}
+				}
+				
+				sublist1ReadPosition+=subListSize;
+				sublist2ReadPosition+=subListSize;
+				recordsRead1=0;
+				recordsRead2=0;
+				
+			}
+			
+			
+		}
+		return writeFile;
 	}
 
 	private static void init() {
@@ -204,17 +275,13 @@ public class Main {
 			INPUT_FILE2_PATH = properties.getProperty("INPUT_FILE2_PATH");
 			OUTPUT_FILE1_PATH = properties.getProperty("OUTPUT_FILE1_PATH");
 			OUTPUT_FILE2_PATH = properties.getProperty("OUTPUT_FILE2_PATH");
+			INTERMEDIATE_OUTPUT_FILE1_PATH = properties.getProperty("INTERMEDIATE_OUTPUT_FILE1_PATH");
+			INTERMEDIATE_OUTPUT_FILE2_PATH = properties.getProperty("INTERMEDIATE_OUTPUT_FILE2_PATH");
+					
 			BLOCK_SIZE = Integer.valueOf(properties.getProperty("BLOCK_SIZE"));
 
 			BLOCKS_IN_MEMORY = MAIN_MEMORY_SIZE / BLOCK_SIZE;
 			TUPPLES_IN_BUFFER = BLOCKS_IN_MEMORY*TUPLES_IN_BLOCK;
-			
-			
-			
-			PrintWriter pw = new PrintWriter(new File(Constants.OUTPUT_FILE1_PATH));
-			pw.close();
-			pw = new PrintWriter(new File(Constants.OUTPUT_FILE2_PATH));
-			pw.close();
 			
 
 		} catch (FileNotFoundException e) {
