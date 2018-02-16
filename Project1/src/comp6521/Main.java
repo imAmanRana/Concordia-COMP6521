@@ -55,12 +55,12 @@ public class Main {
 		
 		// SUBLIST SORTING
 		//file 1
-		int noOfTuplesInR1 = sort(inputFile1,outputFile1);
+		//int noOfTuplesInR1 = sort(inputFile1,outputFile1);
 		//file 2
 		int noOfTuplesInR2 = sort(inputFile2,outputFile2);
 		
 		
-		System.out.println(merge(noOfTuplesInR1,outputFile1,intermediateOutputFile1));
+		//System.out.println(merge(noOfTuplesInR1,outputFile1,intermediateOutputFile1));
 		System.out.println(merge(noOfTuplesInR2,outputFile2,intermediateOutputFile2));
 		
 	}
@@ -104,7 +104,7 @@ public class Main {
 		//execute the passes
 		for(int i=1;i<=noOfPasses;i++) {
 			
-			int subListSize = Constants.TUPPLES_IN_BUFFER*i;
+			int subListSize = Constants.TUPPLES_IN_BUFFER*(int)Math.pow(2, i-1);
 			
 			//decide which file to use for reading and which to use for writing
 			if(i%2==1) {
@@ -142,8 +142,8 @@ public class Main {
 				sublist2ReadPosition+=sublist2.size();
 				boolean continueLoop=true;
 				while(!sublist1.isEmpty() && !sublist2.isEmpty() && recordsRead1<=subListSize && recordsRead2<=subListSize && continueLoop){
-					
-					while(x<RECORDS_TO_READ && y<RECORDS_TO_READ) {
+					System.out.println(" recordsRead1 "+recordsRead1+" recordsRead2 "+recordsRead2);
+					while(x<sublist1.size() && y<sublist2.size()) {
 						
 						if(sublist1.get(x).compareTo(sublist2.get(y))<=0) {
 							mergedList.add(sublist1.get(x++));
@@ -182,7 +182,7 @@ public class Main {
 				}
 				
 				//check which list is remaining
-				if(recordsRead1!=subListSize) {
+				if(recordsRead1<=subListSize && x<sublist1.size()) {
 					
 					int availableMemorySize = Constants.TUPPLES_IN_BUFFER-mergedList.size()-sublist1.size()+x;
 					
@@ -215,10 +215,10 @@ public class Main {
 						Utils.write(mergedList, writeFile);
 						mergedList.clear();
 						recordsRead1+=sublist1.size();
-						sublist1ReadPosition+=sublist1.size();
+						sublist1ReadPosition+=(subListSize-recordsRead1);
 						
 					}
-				}else {
+				}else if(recordsRead2<=subListSize && y<sublist2.size()) {
 					int availableMemorySize = Constants.TUPPLES_IN_BUFFER-mergedList.size()-sublist2.size()+y;
 					
 					if((subListSize-recordsRead2)>availableMemorySize) {
@@ -249,7 +249,7 @@ public class Main {
 						Utils.write(mergedList, writeFile);
 						mergedList.clear();
 						recordsRead2+=sublist2.size();
-						sublist2ReadPosition+=sublist2.size();
+						sublist2ReadPosition+=(subListSize-recordsRead2);
 					}
 				}
 				
@@ -257,6 +257,7 @@ public class Main {
 				sublist2ReadPosition+=subListSize;
 				recordsRead1=0;
 				recordsRead2=0;
+				mergedList.clear();
 				
 			}
 			
