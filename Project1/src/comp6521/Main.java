@@ -5,6 +5,7 @@ package comp6521;
 
 import static comp6521.Constants.BLOCKS_IN_MEMORY;
 import static comp6521.Constants.BLOCK_SIZE;
+import static comp6521.Constants.FINAL_OUTPUT;
 import static comp6521.Constants.INPUT_FILE1_PATH;
 import static comp6521.Constants.INPUT_FILE2_PATH;
 import static comp6521.Constants.INTERMEDIATE_OUTPUT_FILE1_PATH;
@@ -13,6 +14,7 @@ import static comp6521.Constants.MAIN_MEMORY_SIZE;
 import static comp6521.Constants.OUTPUT_FILE1_PATH;
 import static comp6521.Constants.OUTPUT_FILE2_PATH;
 import static comp6521.Constants.TUPLES_IN_BLOCK;
+import static comp6521.Constants.TUPLE_SIZE_IN_BYTES;
 import static comp6521.Constants.TUPPLES_IN_BUFFER;
 
 import java.io.File;
@@ -46,25 +48,195 @@ public class Main {
 		File outputFile2 = new File(Constants.OUTPUT_FILE2_PATH);
 		File intermediateOutputFile1 = new File(Constants.INTERMEDIATE_OUTPUT_FILE1_PATH);
 		File intermediateOutputFile2 = new File(Constants.INTERMEDIATE_OUTPUT_FILE2_PATH);
+		File finalOutput = new File(Constants.FINAL_OUTPUT);
 		
 		clearFile(outputFile1);
 		clearFile(outputFile2);
 		clearFile(intermediateOutputFile1);
 		clearFile(intermediateOutputFile2);
+		clearFile(finalOutput);
 		
-		
+		/*
 		// SUBLIST SORTING
 		//file 1
-		//int noOfTuplesInR1 = sort(inputFile1,outputFile1);
+		int noOfTuplesInR1 = sort(inputFile1,outputFile1);
 		//file 2
 		int noOfTuplesInR2 = sort(inputFile2,outputFile2);
 		
 		
-		//System.out.println(merge(noOfTuplesInR1,outputFile1,intermediateOutputFile1));
-		System.out.println(merge(noOfTuplesInR2,outputFile2,intermediateOutputFile2));
+		File sortedFile1 = merge(noOfTuplesInR1,outputFile1,intermediateOutputFile1);
+		File sortedFile2 = merge(noOfTuplesInR2,outputFile2,intermediateOutputFile2);
+		
+		
+		*/
+		
+		/*REMOVE CODE, JUST FOR TESTING */
+		int noOfTuplesInR1 = 20;
+		int noOfTuplesInR2 = 20;
+		File sortedFile1 = new File("A:\\CodingStuff\\git\\Wontons\\Project1\\resources\\Temp1.txt");
+		File sortedFile2 = new File("A:\\CodingStuff\\git\\Wontons\\Project1\\resources\\Temp2.txt");
+		/*REMOVE CODE, JUST FOR TESTING */
+		
+		performBagDifference(sortedFile1,noOfTuplesInR1,sortedFile2,noOfTuplesInR2,finalOutput);
+		
 		
 	}
 
+	private static void performBagDifference(File sortedFile1, int noOfTuplesInR1, File sortedFile2, int noOfTuplesInR2,File finalOutput) throws IOException {
+		
+		final int RECORDS_TO_READ = TUPPLES_IN_BUFFER/3;
+		
+		int position1 = 1;
+		int start=1;
+		int end=noOfTuplesInR2;
+		List<String> sublist1;
+		List<String> output=new ArrayList<String>();
+		int duplicates1=0;
+		int duplicates2=0;
+		int duplicates2_1=0;
+		int duplicates2_2=0;
+		boolean isSearchAbove = true;
+		String record;
+		int tuplesRemainingToRead=-1;
+		
+		while(position1<=noOfTuplesInR1) {
+			
+			sublist1 = Utils.readFromFile(position1, sortedFile1,RECORDS_TO_READ);
+			position1+=RECORDS_TO_READ;
+
+			for(int i=0;i<sublist1.size()-1;i++) {
+				//check for duplicates in list1
+				duplicates1=1;
+				record = sublist1.get(i);
+				while(record.compareTo(sublist1.get(i+1))==0) {
+					i++;
+					duplicates1++;
+					if(i==sublist1.size()-1) {
+						sublist1 = Utils.readFromFile(position1, sortedFile1, RECORDS_TO_READ);
+						position1+=RECORDS_TO_READ;
+						i=-1;
+					}
+				}
+				
+				
+				int position = performBinarySearchOnFile(record,sortedFile2,start,end);
+				
+				if(position!=-1) {
+					
+					//check records above this position
+					isSearchAbove = true;
+					tuplesRemainingToRead = position-start;
+					duplicates2_1+=linearSearchForDuplicates(record,position-1,sortedFile2,tuplesRemainingToRead,RECORDS_TO_READ,isSearchAbove,duplicates1);
+					
+					
+					
+					//check records below this position
+					isSearchAbove = false;
+					tuplesRemainingToRead = noOfTuplesInR2-position;
+					duplicates2_2+=linearSearchForDuplicates(record,position+1,sortedFile2,tuplesRemainingToRead,RECORDS_TO_READ,isSearchAbove,duplicates1);
+					
+					if(duplicates2_1>0||duplicates2_2>0) {
+						duplicates2=duplicates2_1+duplicates2_2+1;	//add the record found at position
+					}
+					start+=position+duplicates2_2;	
+				}
+				
+				
+				
+				if(output.size()==TUPPLES_IN_BUFFER/3) {
+					Utils.write(output, finalOutput);
+					output.clear();
+				}
+				if(duplicates1>=duplicates2) {
+					output.add(record+": "+(duplicates1-duplicates2));
+				}else {
+					output.add(record+": 0");
+				}
+			}
+		}
+		
+		Utils.write(output, finalOutput);
+		output.clear();
+		System.out.println(finalOutput);
+		
+	}
+
+	private static int performBinarySearchOnFile(String recordOfFile1, File file, int start,int end) {
+		
+		int returnValue = -1;
+		int mid;
+		List<String> recordOfFile2;
+		
+		while(start<=end) {
+			mid = (start+end)/2;
+			recordOfFile2 = Utils.readFromFile(mid, file, 1);
+			
+			if(recordOfFile2.isEmpty()) {
+				break;
+			}else if(recordOfFile1.compareTo(recordOfFile2.get(0))==0) {
+				returnValue = mid;
+				break;
+			}else if(recordOfFile1.compareTo(recordOfFile2.get(0))>0) {
+				start=mid+1;
+			}else {
+				end = mid-1;
+			}
+			recordOfFile2.clear();
+		}
+		return returnValue;
+	}
+
+	private static int linearSearchForDuplicates(String list1Record, int position, File file, int noOftuplesRemaining,int recordsToRead, boolean searchAbove,int duplicates1) {
+
+		int start = position;
+		int duplicates = 0;
+		List<String> list;
+
+		if (searchAbove) {
+			if (noOftuplesRemaining - recordsToRead > 1) {
+				start = position - recordsToRead;
+			} else {
+				start = 1;
+				recordsToRead = noOftuplesRemaining;
+			}
+		} else if (start + recordsToRead > noOftuplesRemaining) {
+			recordsToRead = noOftuplesRemaining;
+		}
+		list = Utils.readFromFile(start, file, recordsToRead);
+		noOftuplesRemaining -= recordsToRead;
+		if (searchAbove) {
+			
+		} else {
+			start += recordsToRead;
+		}
+		for (int i = 0; i < list.size(); i++) {
+			if (list1Record.compareTo(list.get(i)) == 0) {
+				duplicates++;
+				if (i == list.size() - 1 && duplicates1>duplicates) {
+					
+					if (noOftuplesRemaining > 0) {
+
+						list = Utils.readFromFile(start, file, recordsToRead);
+						noOftuplesRemaining -= recordsToRead;
+						i = -1;
+						if (searchAbove) {
+							start = noOftuplesRemaining - recordsToRead > 1 ? start - recordsToRead : 1;
+
+						} else {
+							start = (start + recordsToRead) > noOftuplesRemaining ? start + recordsToRead
+									: start + noOftuplesRemaining;
+						}
+					}
+				}
+			}else {
+				break;
+			}
+		}
+
+		return duplicates;
+	}
+	
+	
 	private static void clearFile(File file) throws IOException {
 		PrintWriter writer = new PrintWriter(file);
 		writer.print("");
@@ -278,8 +450,11 @@ public class Main {
 			OUTPUT_FILE2_PATH = properties.getProperty("OUTPUT_FILE2_PATH");
 			INTERMEDIATE_OUTPUT_FILE1_PATH = properties.getProperty("INTERMEDIATE_OUTPUT_FILE1_PATH");
 			INTERMEDIATE_OUTPUT_FILE2_PATH = properties.getProperty("INTERMEDIATE_OUTPUT_FILE2_PATH");
+			FINAL_OUTPUT = properties.getProperty("FINAL_OUTPUT");
 					
 			BLOCK_SIZE = Integer.valueOf(properties.getProperty("BLOCK_SIZE"));
+			TUPLE_SIZE_IN_BYTES = Integer.valueOf(properties.getProperty("TUPLE_SIZE_IN_BYTES"));
+			TUPLES_IN_BLOCK = Integer.valueOf(properties.getProperty("TUPLES_IN_BLOCK"));
 
 			BLOCKS_IN_MEMORY = MAIN_MEMORY_SIZE / BLOCK_SIZE;
 			TUPPLES_IN_BUFFER = BLOCKS_IN_MEMORY*TUPLES_IN_BLOCK;
