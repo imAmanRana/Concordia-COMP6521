@@ -42,8 +42,8 @@ public class Main {
 		//read the configuration file
 		init();
 
-		File inputFile1 = new File(Main.class.getResource("/"+Constants.INPUT_FILE1_PATH).getFile());
-		File inputFile2 = new File(Main.class.getResource("/"+Constants.INPUT_FILE2_PATH).getFile());
+		File inputFile1 = new File(Constants.INPUT_FILE1_PATH);
+		File inputFile2 = new File(Constants.INPUT_FILE2_PATH);
 		File outputFile1 = new File(Constants.OUTPUT_FILE1_PATH);
 		File outputFile2 = new File(Constants.OUTPUT_FILE2_PATH);
 		File intermediateOutputFile1 = new File(Constants.INTERMEDIATE_OUTPUT_FILE1_PATH);
@@ -71,10 +71,10 @@ public class Main {
 		*/
 		
 		/*REMOVE CODE, JUST FOR TESTING */
-		int noOfTuplesInR1 = 20;
-		int noOfTuplesInR2 = 20;
-		File sortedFile1 = new File("A:\\CodingStuff\\git\\Wontons\\Project1\\resources\\Temp1.txt");
-		File sortedFile2 = new File("A:\\CodingStuff\\git\\Wontons\\Project1\\resources\\Temp2.txt");
+		int noOfTuplesInR1 = 12;
+		int noOfTuplesInR2 = 24;
+		File sortedFile1 = new File("A:\\CodingStuff\\git\\Wontons\\Project1\\resources\\Temp9.txt");
+		File sortedFile2 = new File("A:\\CodingStuff\\git\\Wontons\\Project1\\resources\\Temp10.txt");
 		/*REMOVE CODE, JUST FOR TESTING */
 		
 		performBagDifference(sortedFile1,noOfTuplesInR1,sortedFile2,noOfTuplesInR2,finalOutput);
@@ -84,7 +84,7 @@ public class Main {
 
 	private static void performBagDifference(File sortedFile1, int noOfTuplesInR1, File sortedFile2, int noOfTuplesInR2,File finalOutput) throws IOException {
 		
-		final int RECORDS_TO_READ = TUPPLES_IN_BUFFER/3;
+		final int RECORDS_TO_READ = (noOfTuplesInR1<TUPPLES_IN_BUFFER/3)?noOfTuplesInR1:TUPPLES_IN_BUFFER/3;
 		
 		int position1 = 1;
 		int start=1;
@@ -104,14 +104,23 @@ public class Main {
 			sublist1 = Utils.readFromFile(position1, sortedFile1,RECORDS_TO_READ);
 			position1+=RECORDS_TO_READ;
 
-			for(int i=0;i<sublist1.size()-1;i++) {
+			for(int i=0;i<sublist1.size();i++) {
 				//check for duplicates in list1
 				duplicates1=1;
+				duplicates2_1=0;
+				duplicates2_2=0;
+				duplicates2=0;
 				record = sublist1.get(i);
-				while(record.compareTo(sublist1.get(i+1))==0) {
+				//check if the tuples below are same
+				while(i<sublist1.size()-1 && record.compareTo(sublist1.get(i+1))==0) {
 					i++;
 					duplicates1++;
 					if(i==sublist1.size()-1) {
+						
+						if(position1>noOfTuplesInR1) {
+							break;
+						}
+						
 						sublist1 = Utils.readFromFile(position1, sortedFile1, RECORDS_TO_READ);
 						position1+=RECORDS_TO_READ;
 						i=-1;
@@ -126,19 +135,22 @@ public class Main {
 					//check records above this position
 					isSearchAbove = true;
 					tuplesRemainingToRead = position-start;
-					duplicates2_1+=linearSearchForDuplicates(record,position-1,sortedFile2,tuplesRemainingToRead,RECORDS_TO_READ,isSearchAbove,duplicates1);
+					duplicates2_1+=linearSearchForDuplicates(record,position,sortedFile2,tuplesRemainingToRead,RECORDS_TO_READ,isSearchAbove,duplicates1);
 					
-					
-					
-					//check records below this position
+
+					// check records below this position
 					isSearchAbove = false;
-					tuplesRemainingToRead = noOfTuplesInR2-position;
-					duplicates2_2+=linearSearchForDuplicates(record,position+1,sortedFile2,tuplesRemainingToRead,RECORDS_TO_READ,isSearchAbove,duplicates1);
+					tuplesRemainingToRead = noOfTuplesInR2 - position;
+					duplicates2_2 += linearSearchForDuplicates(record, position + 1, sortedFile2,
+							tuplesRemainingToRead, RECORDS_TO_READ, isSearchAbove, duplicates1);
+					start = position + duplicates2_2+1;
 					
-					if(duplicates2_1>0||duplicates2_2>0) {
-						duplicates2=duplicates2_1+duplicates2_2+1;	//add the record found at position
+					
+					if (duplicates2_1 > 0 || duplicates2_2 > 0) {
+						duplicates2 = duplicates2_1 + duplicates2_2 + 1; 	// add the record found at position
+					}else {
+						duplicates2=1;
 					}
-					start+=position+duplicates2_2;	
 				}
 				
 				
@@ -193,26 +205,44 @@ public class Main {
 		List<String> list;
 
 		if (searchAbove) {
-			if (noOftuplesRemaining - recordsToRead > 1) {
+			if (noOftuplesRemaining - recordsToRead > 0) {
 				start = position - recordsToRead;
 			} else {
-				start = 1;
+				start = position-noOftuplesRemaining;
 				recordsToRead = noOftuplesRemaining;
 			}
-		} else if (start + recordsToRead > noOftuplesRemaining) {
-			recordsToRead = noOftuplesRemaining;
 		}
+		
+		
+		
 		list = Utils.readFromFile(start, file, recordsToRead);
 		noOftuplesRemaining -= recordsToRead;
+		
+		
+		
+		
 		if (searchAbove) {
 			
+			if(noOftuplesRemaining>recordsToRead) {
+				start = start-recordsToRead;
+			}else {
+				start = start-noOftuplesRemaining;
+				recordsToRead=noOftuplesRemaining;
+			}
+
 		} else {
 			start += recordsToRead;
 		}
 		for (int i = 0; i < list.size(); i++) {
+			
 			if (list1Record.compareTo(list.get(i)) == 0) {
 				duplicates++;
-				if (i == list.size() - 1 && duplicates1>duplicates) {
+				
+				/*if(duplicates1<duplicates) {
+					break;
+				}*/
+				
+				if (i == list.size() - 1) {
 					
 					if (noOftuplesRemaining > 0) {
 
