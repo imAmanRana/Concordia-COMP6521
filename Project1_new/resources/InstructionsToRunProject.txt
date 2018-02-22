@@ -1,0 +1,6 @@
+- Its a Java Project.
+- Import the zip file into Eclipse(or any IDE)
+- Configure the application.properties file as per the given input( its preconfigured for the problem statement given by professor), we need to update the absolute paths for the input , output files as per the system on which the program is run
+- Run the Main.java file
+
+- We need to make sure that if the input files are generated on linux machine, then the code should be tested on linux only. This is because of the different representation of END-LINE character in different OS.(for linux its 1, for windows its 2).

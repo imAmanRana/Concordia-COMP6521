@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -39,7 +38,6 @@ public class Main {
 	static int readPointList2 = 0;
 	static int nextReadPointer = 1;
 	static int startPointer2 = 1;
-	static int noOfDiskIO = 0;
 
 	/**
 	 * @param args
@@ -57,38 +55,41 @@ public class Main {
 		File intermediateOutputFile2 = new File(INTERMEDIATE_OUTPUT_FILE2_PATH);
 		File finalOutput = new File(FINAL_OUTPUT);
 
-		clearFile(outputFile1);
-		clearFile(outputFile2);
-		clearFile(intermediateOutputFile1);
-		clearFile(intermediateOutputFile2);
-		clearFile(finalOutput);
-		Utils.retrieveLineSeparator(inputFile1);
-		// SUBLIST SORTING
-		// file 1
+		Utils.clearFile(outputFile1);
+		Utils.clearFile(outputFile2);
+		Utils.clearFile(intermediateOutputFile1);
+		Utils.clearFile(intermediateOutputFile2);
+		Utils.clearFile(finalOutput);
+
+		// sublist sorting file 1
 		long start = System.nanoTime();
 		int noOfTuplesInR1 = sort(inputFile1, outputFile1);
 		long end = System.nanoTime();
-		System.out.println("Sublist sort for bag1 in : " + (end - start) / 1_000_000_000+" seconds");
-		// file 2
+		System.out.println("Sublist sort for bag1 in : " + (end - start) / 1_000_000_000 + " seconds");
+
+		// sublist sorting file 2
 		start = System.nanoTime();
 		int noOfTuplesInR2 = sort(inputFile2, outputFile2);
 		end = System.nanoTime();
-		System.out.println("Sublist sort for bag2 in : " + (end - start) / 1_000_000_000+" seconds");
+		System.out.println("Sublist sort for bag2 in : " + (end - start) / 1_000_000_000 + " seconds");
 
+		// merging sublist in file 1
 		start = System.nanoTime();
 		File sortedFile1 = merge(noOfTuplesInR1, outputFile1, intermediateOutputFile1);
 		end = System.nanoTime();
-		System.out.println("Merged bag1 after : " + (end - start) / 1_000_000_000+" seconds");
+		System.out.println("Merged bag1 after : " + (end - start) / 1_000_000_000 + " seconds");
 
+		// merging sublist in file 2
 		start = System.nanoTime();
 		File sortedFile2 = merge(noOfTuplesInR2, outputFile2, intermediateOutputFile2);
 		end = System.nanoTime();
-		System.out.println("Merged bag2 after : " + (end - start) / 1_000_000_000+" seconds");
+		System.out.println("Merged bag2 after : " + (end - start) / 1_000_000_000 + " seconds");
 
+		// finding the bag difference, file1-file2
 		start = System.nanoTime();
 		bagDifference(sortedFile1, noOfTuplesInR1, sortedFile2, noOfTuplesInR2, finalOutput);
 		end = System.nanoTime();
-		System.out.println("Bag Difference after : " + (end - start) / 1_000_000_000+" seconds");
+		System.out.println("Bag Difference after : " + (end - start) / 1_000_000_000 + " seconds");
 	}
 
 	private static void bagDifference(File sortedFile1, int noOfTuplesInR1, File sortedFile2, int noOfTuplesInR2,
@@ -108,8 +109,8 @@ public class Main {
 
 			recordsToRead = (noOfTuplesInR1 - startPointer1) > recordsToRead ? recordsToRead
 					: (noOfTuplesInR1 - startPointer1) + 1;
-
-			list1 = Utils.readFromFile(startPointer1, sortedFile1, recordsToRead);
+			list1=new ArrayList<>();
+			Utils.readFromFile(list1, startPointer1, sortedFile1, recordsToRead);
 			startPointer1 += list1.size();
 
 			listIterator = list1.iterator();
@@ -193,7 +194,7 @@ public class Main {
 			if (readPointList2 >= list2.size()) {
 				recordsToRead = (noOfTuples - startPointer2) > recordsToRead ? recordsToRead
 						: (noOfTuples - startPointer2) + 1;
-				list2 = Utils.readFromFile(nextReadPointer, sortedFile, recordsToRead);
+				list2 = Utils.readFromFile(new ArrayList<String>(),nextReadPointer, sortedFile, recordsToRead);
 				nextReadPointer += list2.size();
 				listIterator = list2.iterator();
 				readPointList2 = 0;
@@ -225,6 +226,9 @@ public class Main {
 
 	}
 
+	/**
+	 * Reads the configuration file
+	 */
 	private static void init() {
 		// read the properties file
 		Properties properties = new Properties();
@@ -248,41 +252,31 @@ public class Main {
 			TUPPLES_IN_BUFFER = BLOCKS_IN_MEMORY * TUPLES_IN_BLOCK;
 
 		} catch (FileNotFoundException e) {
-			System.out.println("Input file not found");
-			e.printStackTrace();
+			System.out.println("Input file not found: " + e.getMessage());
 		} catch (IOException e) {
-			System.out.println("IO Exception");
-			e.printStackTrace();
+			System.out.println("IO Exception: " + e.getMessage());
 		}
 	}
 
-	private static void clearFile(File file) throws IOException {
-		PrintWriter writer = new PrintWriter(file);
-		writer.print("");
-		writer.flush();
-		writer.close();
-	}
-
 	private static int sort(File inputFile, File outputFile) throws IOException {
-		List<String> records = null;
-		int readLine = 1;
-		int noOfTuples = 0;
+		List<String> records;
+		int noOfTuples = 1;
 		int recordsTORead = TUPPLES_IN_BUFFER;
+		
 		do {
-			records = Utils.readFromFile(readLine, inputFile, recordsTORead);
+			records=new ArrayList<>();
+			Utils.readFromFile(records,noOfTuples, inputFile, recordsTORead);
 
 			/*
 			 * Using Java's in-build sorting method(its much efficient)
 			 */
 			Collections.sort(records);
-
 			// write back to file
 			Utils.write(records, outputFile);
-			readLine += records.size();
 			noOfTuples += records.size();
 		} while (records != null && !records.isEmpty());
 
-		return noOfTuples;
+		return noOfTuples-1;
 	}
 
 	private static File merge(int noOfTuples, File file, File intermediateFile) throws IOException {
@@ -304,7 +298,7 @@ public class Main {
 				readFile = intermediateFile;
 				writeFile = file;
 			}
-			clearFile(writeFile);
+			Utils.clearFile(writeFile);
 			// no. of sublists for this pass
 			int noOfSubList = (int) Math.ceil((double) noOfTuples / subListSize);
 
@@ -313,8 +307,8 @@ public class Main {
 			int sublist2ReadPosition = 1 + subListSize;
 			int recordsRead1 = 0;
 			int recordsRead2 = 0;
-			List<String> sublist1;
-			List<String> sublist2;
+			List<String> sublist1=null;
+			List<String> sublist2=null;
 
 			// read 2 sublist at a time and merge them
 			for (int j = 1; j <= noOfSubList; j += 2) {
@@ -322,12 +316,13 @@ public class Main {
 				// do the merging
 				int x = 0;
 				int y = 0;
-
-				sublist1 = Utils.readFromFile(sublist1ReadPosition, readFile, RECORDS_TO_READ);
+				sublist1 = new ArrayList<>();
+				Utils.readFromFile(sublist1,sublist1ReadPosition, readFile, RECORDS_TO_READ);
 				recordsRead1 += sublist1.size();
 				sublist1ReadPosition += sublist1.size();
 
-				sublist2 = Utils.readFromFile(sublist2ReadPosition, readFile, RECORDS_TO_READ);
+				sublist2 = new ArrayList<>();
+				Utils.readFromFile(sublist2,sublist2ReadPosition, readFile, RECORDS_TO_READ);
 				recordsRead2 += sublist2.size();
 				sublist2ReadPosition += sublist2.size();
 				boolean continueLoop = true;
@@ -353,7 +348,8 @@ public class Main {
 						if (recordsRead1 == subListSize) {
 							continueLoop = false;
 						} else {
-							sublist1 = Utils.readFromFile(sublist1ReadPosition, readFile, RECORDS_TO_READ);
+							sublist1 = new ArrayList<>();
+							Utils.readFromFile(sublist1,sublist1ReadPosition, readFile, RECORDS_TO_READ);
 							x = 0;
 							recordsRead1 += sublist1.size();
 							sublist1ReadPosition += RECORDS_TO_READ;
@@ -363,7 +359,8 @@ public class Main {
 						if (recordsRead2 == subListSize) {
 							continueLoop = false;
 						} else {
-							sublist2 = Utils.readFromFile(sublist2ReadPosition, readFile, RECORDS_TO_READ);
+							sublist2 = new ArrayList<>();
+							Utils.readFromFile(sublist2,sublist2ReadPosition, readFile, RECORDS_TO_READ);
 							y = 0;
 							recordsRead2 += sublist2.size();
 							sublist2ReadPosition += RECORDS_TO_READ;
@@ -378,7 +375,7 @@ public class Main {
 
 					if ((subListSize - recordsRead1) > availableMemorySize) {
 						mergedList.addAll(sublist1.subList(x, sublist1.size()));
-						mergedList.addAll(Utils.readFromFile(sublist1ReadPosition, readFile, availableMemorySize));
+						mergedList.addAll(Utils.readFromFile(new ArrayList<String>(),sublist1ReadPosition, readFile, availableMemorySize));
 						sublist1ReadPosition += availableMemorySize;
 						recordsRead1 += availableMemorySize;
 						Utils.write(mergedList, writeFile);
@@ -386,11 +383,12 @@ public class Main {
 
 						for (int size = (subListSize - recordsRead1); size > 0; size -= TUPPLES_IN_BUFFER) {
 							if (size >= TUPPLES_IN_BUFFER) {
-								sublist1 = Utils.readFromFile(sublist1ReadPosition, readFile, TUPPLES_IN_BUFFER);
+								sublist1 = Utils.readFromFile(new ArrayList<String>(),sublist1ReadPosition, readFile, TUPPLES_IN_BUFFER);
 								sublist1ReadPosition += TUPPLES_IN_BUFFER;
 								recordsRead1 += sublist1.size();
 							} else {
-								sublist1 = Utils.readFromFile(sublist1ReadPosition, readFile, size);
+								sublist1 = new ArrayList<>();
+								Utils.readFromFile(sublist1,sublist1ReadPosition, readFile, size);
 								sublist1ReadPosition += size;
 								recordsRead1 += sublist1.size();
 							}
@@ -400,7 +398,8 @@ public class Main {
 					} else {
 
 						mergedList.addAll(sublist1.subList(x, sublist1.size()));
-						sublist1 = Utils.readFromFile(sublist1ReadPosition, readFile, (subListSize - recordsRead1));
+						sublist1 = new ArrayList<>();
+						Utils.readFromFile(sublist1,sublist1ReadPosition, readFile, (subListSize - recordsRead1));
 						mergedList.addAll(sublist1);
 						Utils.write(mergedList, writeFile);
 						mergedList.clear();
@@ -413,7 +412,7 @@ public class Main {
 
 					if ((subListSize - recordsRead2) > availableMemorySize) {
 						mergedList.addAll(sublist2.subList(y, sublist2.size()));
-						mergedList.addAll(Utils.readFromFile(sublist2ReadPosition, readFile, availableMemorySize));
+						mergedList.addAll(Utils.readFromFile(new ArrayList<String>(),sublist2ReadPosition, readFile, availableMemorySize));
 						sublist2ReadPosition += availableMemorySize;
 						recordsRead2 += availableMemorySize;
 						Utils.write(mergedList, writeFile);
@@ -421,11 +420,13 @@ public class Main {
 
 						for (int size = (subListSize - recordsRead2); size > 0; size -= TUPPLES_IN_BUFFER) {
 							if (size >= TUPPLES_IN_BUFFER) {
-								sublist2 = Utils.readFromFile(sublist2ReadPosition, readFile, TUPPLES_IN_BUFFER);
+								sublist2 = new ArrayList<>();
+								Utils.readFromFile(sublist2,sublist2ReadPosition, readFile, TUPPLES_IN_BUFFER);
 								sublist2ReadPosition += TUPPLES_IN_BUFFER;
 								recordsRead2 += sublist2.size();
 							} else {
-								sublist2 = Utils.readFromFile(sublist2ReadPosition, readFile, size);
+								sublist2 = new ArrayList<>();
+								Utils.readFromFile(sublist2,sublist2ReadPosition, readFile, size);
 								sublist2ReadPosition += size;
 								recordsRead2 += sublist2.size();
 							}
@@ -434,7 +435,8 @@ public class Main {
 
 					} else {
 						mergedList.addAll(sublist2.subList(y, sublist2.size()));
-						sublist2 = Utils.readFromFile(sublist2ReadPosition, readFile, (subListSize - recordsRead2));
+						sublist2 = new ArrayList<>();
+						Utils.readFromFile(sublist2,sublist2ReadPosition, readFile, (subListSize - recordsRead2));
 						mergedList.addAll(sublist2);
 						Utils.write(mergedList, writeFile);
 						mergedList.clear();
