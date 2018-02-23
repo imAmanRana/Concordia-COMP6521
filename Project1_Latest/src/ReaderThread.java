@@ -16,15 +16,13 @@ import java.nio.channels.ReadableByteChannel;
 public class ReaderThread implements Runnable {
 
 	private final int startPoint;
-	private final int recordsToSkip;
 	private final int recordsToRead;
 	private final File file;
 	private final byte[][] tuples;
 	int lineSeparatorLength = System.lineSeparator().getBytes().length;
 
-	public ReaderThread(int startPoint, int recordsToSkip, int recordsToRead, File file, byte[][] tuples) {
+	public ReaderThread(int startPoint, int recordsToRead, File file, byte[][] tuples) {
 		this.startPoint = startPoint;
-		this.recordsToSkip = recordsToSkip;
 		this.recordsToRead = recordsToRead;
 		this.file = file;
 		this.tuples = tuples;

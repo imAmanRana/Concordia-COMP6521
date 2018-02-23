@@ -1,5 +1,4 @@
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -18,11 +17,13 @@ public class WriterThread implements Runnable {
 	private final byte[][] tuples;
 	private final File file;
 	private int size;
+	private int tupleSize;
 	
-	public WriterThread(byte[][] tuples,File file,int size) {
+	public WriterThread(byte[][] tuples,File file,int size,int...tupleSize) {
 		this.tuples = tuples;
 		this.file = file;
 		this.size = size;
+		this.tupleSize = tupleSize.length<=0?Constants.TUPLE_SIZE_IN_BYTES:tupleSize[0];
 	}
 	
 	/* (non-Javadoc)
@@ -34,14 +35,14 @@ public class WriterThread implements Runnable {
 			
 			int lineSeparatorLength = System.lineSeparator().getBytes().length;
 			ByteBuffer buffer = ByteBuffer.allocateDirect(
-					size * (Constants.TUPLE_SIZE_IN_BYTES + lineSeparatorLength));
+					size * (tupleSize + lineSeparatorLength));
 
 			// write the sorted buffer to file
 			buffer.clear();
 			int count=0;
 			while (count < size) {
 				if(tuples[count]==null)
-					continue;
+					break;
 				buffer.put(tuples[count++]);
 			}
 			buffer.flip();
