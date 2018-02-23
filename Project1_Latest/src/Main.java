@@ -52,8 +52,12 @@ public class Main {
 				break;
 			case "3":
 				clearFile(new File(Constants.FINAL_OUTPUT));
+				long start = System.nanoTime();
 				bagDifference(new File(Constants.MERGED_OUTPUT1), new File(Constants.MERGED_OUTPUT1),
 						new File(Constants.FINAL_OUTPUT));
+				long end = System.nanoTime();
+				System.out.println("Bag Difference : " + (end - start) / 1_000_000_000 + " seconds");
+				
 				break;
 			default:
 				System.out.println("Please provide valid input");
@@ -208,13 +212,14 @@ public class Main {
 						continue;
 					} else if (recordsToRead - currentReadPointer[i] > 0 || currentReadPointer[i] < tuples[i].length) {
 						j = currentReadPointer[i];
-					} else if (!allRecordsFetched[i] && recordsFetched[i] == Constants.TUPPLES_IN_BUFFER
-							&& currentReadPointer[i] == tuples[i].length) {
+					} else if (!allRecordsFetched[i] && recordsFetched[i] >= Constants.TUPPLES_IN_BUFFER
+							&& currentReadPointer[i] >= tuples[i].length) {
 						allRecordsFetched[i] = true;
 						count++;
 					} else {
 						j = 0;
 						currentReadPointer[i] = 0;
+						recordsToRead=(Constants.TUPPLES_IN_BUFFER-recordsFetched[i])<recordsToRead?Constants.TUPPLES_IN_BUFFER-recordsFetched[i]:recordsToRead;
 						tuples[i] = new byte[recordsToRead][];
 						Runnable task = new ReaderThread(startPoint[i], recordsToRead, inputFile, tuples[i]);
 						recordsFetched[i] += recordsToRead;
@@ -245,13 +250,6 @@ public class Main {
 						min = tuples[i][j];
 						minList = i;
 					}
-				}
-				if (minList != -1) {
-					System.out.println(aman);
-					String tem = new String(min);
-					System.out.print(tem.trim() + " : " + tem.length() + " : " + minList);
-					System.out.println(" : currentReadPointer : " + currentReadPointer[minList] + " : startPoint "
-							+ startPoint[minList]);
 				}
 				if (minList == -1) {
 					Thread t = new Thread(new WriterThread(sorted, outputFile, recordsToRead));
@@ -289,12 +287,12 @@ public class Main {
 
 			int lineSeparatorLength = System.lineSeparator().getBytes().length;
 			ByteBuffer buffer = ByteBuffer.allocateDirect(
-					Constants.TUPPLES_IN_BUFFER * (Constants.TUPLE_SIZE_IN_BYTES + lineSeparatorLength));
+					Constants.TUPPLE_IN_BAG_DIFF * (Constants.TUPLE_SIZE_IN_BYTES + lineSeparatorLength));
 
 			byte[] receive = new byte[Constants.TUPLE_SIZE_IN_BYTES + lineSeparatorLength];
 
-			byte[][] tuples1 = new byte[Constants.TUPPLES_IN_BUFFER][];
-			byte[][] output = new byte[Constants.TUPPLES_IN_BUFFER][];
+			byte[][] tuples1 = new byte[Constants.TUPPLE_IN_BAG_DIFF][];
+			byte[][] output = new byte[Constants.TUPPLE_IN_BAG_DIFF][];
 			int counter = 0;
 			int outputCounter = -1;
 			byte[] record=null;
@@ -316,9 +314,9 @@ public class Main {
 				// find duplicates in same file
 				for (int i = 0; i < counter;) {
 
-					if (outputCounter == Constants.TUPPLES_IN_BUFFER-1) {
+					if (outputCounter == Constants.TUPPLE_IN_BAG_DIFF-1) {
 						Thread t = new Thread(
-								new WriterThread(output, outputFile, Constants.TUPPLES_IN_BUFFER, output[0].length));
+								new WriterThread(output, outputFile, Constants.TUPPLE_IN_BAG_DIFF, output[0].length));
 						t.start();
 						try {
 							t.join();
@@ -326,7 +324,7 @@ public class Main {
 							e.printStackTrace();
 						}
 						output = null;
-						output = new byte[Constants.TUPPLES_IN_BUFFER][];
+						output = new byte[Constants.TUPPLE_IN_BAG_DIFF][];
 						outputCounter = -1;
 					}
 
@@ -377,9 +375,9 @@ public class Main {
 						previous1=null;
 						duplicates2 = SearchDuplicates.findDuplicatesInFile(record);
 
-						if (outputCounter == Constants.TUPPLES_IN_BUFFER-1) {
+						if (outputCounter == Constants.TUPPLE_IN_BAG_DIFF-1) {
 							Thread t = new Thread(
-									new WriterThread(output, outputFile, Constants.TUPPLES_IN_BUFFER, output[0].length));
+									new WriterThread(output, outputFile, Constants.TUPPLE_IN_BAG_DIFF, output[0].length));
 							t.start();
 							try {
 								t.join();
@@ -387,7 +385,7 @@ public class Main {
 								e.printStackTrace();
 							}
 							output = null;
-							output = new byte[Constants.TUPPLES_IN_BUFFER][];
+							output = new byte[Constants.TUPPLE_IN_BAG_DIFF][];
 							outputCounter = -1;
 						}
 						
@@ -438,7 +436,7 @@ public class Main {
 			
 			if (outputCounter >= 0) {
 				Thread t = new Thread(
-						new WriterThread(output, outputFile, Constants.TUPPLES_IN_BUFFER, output[0].length));
+						new WriterThread(output, outputFile, Constants.TUPPLE_IN_BAG_DIFF, output[0].length));
 				t.start();
 				try {
 					t.join();
