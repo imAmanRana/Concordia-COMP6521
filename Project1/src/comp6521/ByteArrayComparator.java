@@ -1,5 +1,11 @@
+package comp6521;
 import java.util.Comparator;
 
+/**
+ * Anti-Lexicographical byte array comparator
+ * @author AmanRana
+ *
+ */
 public class ByteArrayComparator implements Comparator<byte[]> {
 
 	@Override

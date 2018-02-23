@@ -1,3 +1,4 @@
+package comp6521;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

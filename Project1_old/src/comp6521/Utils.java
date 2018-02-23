@@ -66,6 +66,8 @@ public class Utils {
 	 */
 	public static void write(List<String> sublist, File file) throws IOException {
 
+		if(sublist.isEmpty())
+			return;
 		try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
 			for (String tuple : sublist) {
 				bw.write(tuple);
@@ -91,7 +93,9 @@ public class Utils {
 	 */
 	public static List<String> readFromFile(List<String> records, int startPoint, File file, int recordsToRead) {
 
-		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+		if(recordsToRead<1)
+			return records;
+		try (BufferedReader br = new BufferedReader(new FileReader(file),recordsToRead)) {
 			String line;
 			long startAtByte = getSeekPosition(startPoint, file);
 			br.skip(startAtByte);

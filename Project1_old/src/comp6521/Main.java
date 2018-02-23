@@ -264,7 +264,7 @@ public class Main {
 		int recordsTORead = TUPPLES_IN_BUFFER;
 		
 		do {
-			records=new ArrayList<>();
+			records=new ArrayList<>(recordsTORead);
 			Utils.readFromFile(records,noOfTuples, inputFile, recordsTORead);
 
 			/*
@@ -274,7 +274,7 @@ public class Main {
 			// write back to file
 			Utils.write(records, outputFile);
 			noOfTuples += records.size();
-		} while (records != null && !records.isEmpty());
+		} while (!records.isEmpty());
 
 		return noOfTuples-1;
 	}

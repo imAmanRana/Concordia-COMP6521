@@ -5,6 +5,7 @@ package comp6521;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,9 +23,9 @@ public class BenchmarkPerformance {
 		File inputFile = new File("A:/CodingStuff/git/Wontons/Project1/resources/converted_bag1.txt");
 		
 		
+		checkRecords();
 		
-		
-		for(int i=0;i<10;i++) {
+		for(int i=0;i>10;i++) {
 			
 			
 			System.out.println("\n\n\n_____________________"+i+"_________________________");
@@ -37,7 +38,7 @@ public class BenchmarkPerformance {
 			System.out.println("Time Taken to read linearly(me) (ms) : "+(end-start)/1_000_000);
 			
 			start = System.nanoTime();
-			list = Utils.readFromFile(1, inputFile, 25000);
+			Utils.readFromFile(list,1, inputFile, 25000);
 			end = System.nanoTime();
 			System.out.println("Time Taken to read linearly(kamal) (ms) : "+(end-start)/1_000_000);
 			
@@ -50,16 +51,23 @@ public class BenchmarkPerformance {
 			System.out.println("Time Taken to read linearly(me) (ms) : "+(end-start)/1_000_000);
 			
 			start = System.nanoTime();
-			list = Utils.readFromFile(20000, inputFile, 25000);
+			Utils.readFromFile(list,20000, inputFile, 25000);
 			end = System.nanoTime();
 			System.out.println("Time Taken to read linearly(kamal) (ms) : "+(end-start)/1_000_000);
 			
 		}
 		
 		
-		
-		
-		
+	}
+	
+	public static void passingArrayList(List<String> record) {
+		record.add("Aman");
+		record.add("Deep");
 	}
 
+	public static void checkRecords() {
+		List<String> record =new ArrayList<>();
+		passingArrayList(record);
+		System.out.println(record);
+	}
 }
