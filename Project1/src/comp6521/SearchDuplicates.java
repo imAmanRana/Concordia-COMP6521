@@ -1,7 +1,5 @@
 package comp6521;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.nio.channels.FileChannel;
 
 /**
  * 
@@ -28,7 +26,7 @@ public class SearchDuplicates {
 
 		int duplicates = 0;
 		if (tuple == null || readPointer <= startPointer) {
-			tuple = new byte[Constants.TUPPLES_IN_BUFFER][];
+			tuple = new byte[Constants.TUPPLE_IN_BAG_DIFF][];
 			readData(tuple);
 			count=0;
 
@@ -44,7 +42,7 @@ public class SearchDuplicates {
 			count++;
 			startPointer++;
 			if (readPointer <= startPointer) {
-				tuple = new byte[Constants.TUPPLES_IN_BUFFER][];
+				tuple = new byte[Constants.TUPPLE_IN_BAG_DIFF][];
 				readData(tuple);
 				count=0;
 			}
@@ -55,8 +53,8 @@ public class SearchDuplicates {
 	}
 
 	private static void readData(byte[][] tuple) {
-		Runnable task = new ReaderThread(readPointer,Constants.TUPPLES_IN_BUFFER ,file,tuple);
-		readPointer+=Constants.TUPPLES_IN_BUFFER;
+		Runnable task = new ReaderThread(readPointer,Constants.TUPPLE_IN_BAG_DIFF ,file,tuple);
+		readPointer+=Constants.TUPPLE_IN_BAG_DIFF;
 		Thread t = new Thread(task);
 		t.start();
 		try {

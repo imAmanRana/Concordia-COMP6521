@@ -40,13 +40,15 @@ public class Main {
 				clearFile(new File(Constants.OUTPUT_FILE1));
 				clearFile(new File(Constants.MERGED_OUTPUT1));
 				// do sorting and merging for bag1
+				System.out.println("BAG1");
 				sortAndMerge(new File(Constants.INPUT_FILE1), new File(Constants.OUTPUT_FILE1),
 						new File(Constants.MERGED_OUTPUT1));
 				break;
 			case "2":
 				clearFile(new File(Constants.OUTPUT_FILE2));
 				clearFile(new File(Constants.MERGED_OUTPUT2));
-				// do sorting and merging for bag1
+				// do sorting and merging for bag2
+				System.out.println("BAG2");
 				sortAndMerge(new File(Constants.INPUT_FILE2), new File(Constants.OUTPUT_FILE2),
 						new File(Constants.MERGED_OUTPUT2));
 				break;
@@ -120,7 +122,7 @@ public class Main {
 		long start = System.nanoTime();
 		sortSublist(inputFile, outputFile);
 		long end = System.nanoTime();
-		System.out.println("BAG1\nSublist Sort : " + (end - start) / 1_000_000_000 + " seconds");
+		System.out.println("Sublist Sort : " + (end - start) / 1_000_000_000 + " seconds");
 
 		start = System.nanoTime();
 		mergeSublist(outputFile, intermediateFile);
@@ -454,9 +456,11 @@ public class Main {
 	 * @return
 	 */
 	private static byte[] formatOutput(byte[] record, int diff) {
-		String template = "%s:%-3d" + System.lineSeparator();
-		return String.format(template, new String(record).replaceAll("\\r\\n", ""), diff > 0 ? diff : 0).getBytes();
-	}
+		byte[] b = (String.valueOf(" : " + (diff>0?diff:0)+" ")+System.lineSeparator()).getBytes();
+		return ByteBuffer
+				.allocate(record.length - 2 + b.length)
+				.put(record, 0, record.length - 2).put(b).array();
+		}
 
 	/**
 	 * writes the output to file
