@@ -27,7 +27,7 @@ public class Main {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		
+
 		if (args.length < 1) {
 			// TODO - update the output for user
 			System.out.println("Please provide valid input");
@@ -35,7 +35,7 @@ public class Main {
 			switch (args[0]) {
 
 			case "1":
-				//clearFile(new File(Constants.OUTPUT_FILE1));
+				// clearFile(new File(Constants.OUTPUT_FILE1));
 				clearFile(new File(Constants.MERGED_OUTPUT1));
 				// do sorting for bag1
 				sortAndMerge(new File(Constants.INPUT_FILE1), new File(Constants.OUTPUT_FILE1),
@@ -58,7 +58,7 @@ public class Main {
 		}
 
 	}
-	
+
 	/**
 	 * Creates new file if it doesn't exists.
 	 * 
@@ -92,8 +92,18 @@ public class Main {
 	}
 
 	private static void sortAndMerge(File inputFile, File outputFile, File intermediateFile) throws IOException {
-		//sortSublist(inputFile, outputFile);
+
+		// sublist sorting file 1
+		long start = System.nanoTime();
+		sortSublist(inputFile, outputFile);
+		long end = System.nanoTime();
+		System.out.println("Sublist sort : " + (end - start) / 1_000_000_000 + " seconds");
+
+		start = System.nanoTime();
 		mergeSublist(outputFile, intermediateFile);
+		end = System.nanoTime();
+		System.out.println("Merging : " + (end - start) / 1_000_000_000 + " seconds");
+
 	}
 
 	private static void mergeSublist(File inputFile, File outputFile) {
@@ -131,26 +141,27 @@ public class Main {
 			byte[] min;
 			int minList = -1;
 			int count = 0;
-			int aman=1;
+			int aman = 1;
 			int[] currentReadPointer = new int[noOfSublists];
 			byte[][] sorted = new byte[recordsToRead][];
 			boolean[] allRecordsFetched = new boolean[noOfSublists];
 			int currentOutputPointer = 0;
 			boolean allTuplesRead = false;
 			ByteArrayComparator bac = new ByteArrayComparator();
-			outer:while (!allTuplesRead) {
+			outer: while (!allTuplesRead) {
 				int j = -1;
 				aman++;
 				min = new byte[] { Byte.MAX_VALUE };
 				minList = -1;
 				for (int i = 0; i < noOfSublists; i++) {
 					j = -1;
-					if(allRecordsFetched[i]) {
+					if (allRecordsFetched[i]) {
 						continue;
-					}else if (recordsToRead - currentReadPointer[i] > 0 || currentReadPointer[i] < tuples[i].length) {
+					} else if (recordsToRead - currentReadPointer[i] > 0 || currentReadPointer[i] < tuples[i].length) {
 						j = currentReadPointer[i];
-					} else if (!allRecordsFetched[i] && recordsFetched[i] == Constants.TUPPLES_IN_BUFFER && currentReadPointer[i] == tuples[i].length) {
-						allRecordsFetched[i]=true;
+					} else if (!allRecordsFetched[i] && recordsFetched[i] == Constants.TUPPLES_IN_BUFFER
+							&& currentReadPointer[i] == tuples[i].length) {
+						allRecordsFetched[i] = true;
 						count++;
 					} else {
 						j = 0;
@@ -161,11 +172,11 @@ public class Main {
 						startPoint[i] += recordsToRead;
 						Thread t = new Thread(task);
 						t.start();
-//						try {
-//							t.join();
-//						} catch (InterruptedException e) {
-//							e.printStackTrace();
-//						}
+						// try {
+						// t.join();
+						// } catch (InterruptedException e) {
+						// e.printStackTrace();
+						// }
 
 					}
 
@@ -179,20 +190,21 @@ public class Main {
 						minList = i;
 					}
 				}
-//				{
-//					//System.out.println(aman);
-//					String tem  =new String(min);
-//					System.out.print(tem.trim()+" : "+tem.length()+" : "+minList);
-//					System.out.println(" : currentReadPointer : "+currentReadPointer[minList]+" : startPoint "+startPoint[minList]);
-//				}
-				if(minList==-1) {
+				// {
+				// //System.out.println(aman);
+				// String tem =new String(min);
+				// System.out.print(tem.trim()+" : "+tem.length()+" : "+minList);
+				// System.out.println(" : currentReadPointer : "+currentReadPointer[minList]+" :
+				// startPoint "+startPoint[minList]);
+				// }
+				if (minList == -1) {
 					Thread t = new Thread(new WriterThread(sorted, outputFile, recordsToRead));
 					t.start();
-//					try {
-//						t.join();
-//					} catch (InterruptedException e) {
-//						e.printStackTrace();
-//					}
+					// try {
+					// t.join();
+					// } catch (InterruptedException e) {
+					// e.printStackTrace();
+					// }
 					break;
 				}
 				currentReadPointer[minList] += 1;

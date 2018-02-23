@@ -31,6 +31,8 @@ public class Constants {
 	public static final int BLOCK_SIZE = 4096;
 	public static final int MAIN_MEMORY_SIZE = 5242880;
 	public static final int MEMORY_UTILIZATION = 75;
+//	public static final int MAIN_MEMORY_SIZE = 10485760;
+//	public static final int MEMORY_UTILIZATION = 50;
 	public static final int TUPPLES_IN_BUFFER = (int)(TUPLES_IN_BLOCK*((double)MAIN_MEMORY_SIZE/BLOCK_SIZE)*((double)MEMORY_UTILIZATION/100));
 	
 }
