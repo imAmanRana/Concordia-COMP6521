@@ -50,5 +50,5 @@ public class Constants {
 	public static final int BLOCK_SIZE = 4096;
 	public static final int TUPPLES_IN_BUFFER = (int)(TUPLES_IN_BLOCK*((double)MAIN_MEMORY_SIZE/BLOCK_SIZE)
 																					*((double)MEMORY_UTILIZATION/100));
-	public static final int TUPPLE_IN_BAG_DIFF = (int)(TUPPLES_IN_BUFFER/(double)40/100);
+	public static final int TUPPLE_IN_BAG_DIFF = (int)(TUPPLES_IN_BUFFER*((double)30/100));
 }
