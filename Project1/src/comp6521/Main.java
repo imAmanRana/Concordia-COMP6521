@@ -296,7 +296,7 @@ public class Main {
 					break;
 				}
 				currentReadPointer[minList] += 1;
-				if (currentOutputPointer == recordsToRead) {
+				if (currentOutputPointer >= recordsToRead) {
 					Thread t = new Thread(new WriterThread(sorted, outputFile, recordsToRead));
 					t.start();
 					try {
