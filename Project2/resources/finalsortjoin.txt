@@ -1,0 +1,14 @@
+40000001Lillian   Wheeler   116004484822865Ronek Extension,Tiwnadoco,NB,R8T 2Z2                     COMP201 220183 B   
+40000001Lillian   Wheeler   116004484822865Ronek Extension,Tiwnadoco,NB,R8T 2Z2                     COMP201 220183 B   
+40000002Adam      Henry     113004657941014Sote Grove,Mambaret,NU,J1I 9B7                           COMP476 220144 B-  
+40000002Adam      Henry     113004657941014Sote Grove,Mambaret,NU,J1I 9B7                           COMP476 220144 B-  
+40000003Ella      Elliott   109007941639724Zoveci Key,Tidoofo,NL,G6T 5E0                            COMP442 120154 A   
+40000004Kyle      Henry     106001089861944Cisab Loop,Opurire,QC,X4J 7W5                            COMP426 120164 A   
+40000006Brett     Lindsey   108003029105998Geroh Road,Abfito,NU,J3T 7F4                             COMP367 220173 B   
+40000006Brett     Lindsey   108003029105998Geroh Road,Abfito,NU,J3T 7F4                             COMP479 120154 B+  
+40000008Francis   Gordon    105004656954527Walwa Grove,Noelevi,ON,J1N 0P6                           COMP339 420163 B   
+40000009Johnny    Aguilar   108002347405779Guwov View,Wurharta,YT,S6I 8E2                           COMP354 420174 B+  
+40000013Olive     Spencer   111002884154350Imeic Heights,Sepedpat,NB,R4J 9J8                        COMP445 220144 B   
+40000015Corey     Hughes    110004217404213Kuagu Boulevard,Nipogse,BC,R4T 8O2                       COMP445 220154 B   
+40000015Corey     Hughes    110004217404213Kuagu Boulevard,Nipogse,BC,R4T 8O2                       COMP445 220154 B   
+40000016Irene     Byrd      114008569278008Ozmu Point,Rasjuvde,NB,K8T 5N3                           COMP335 420163 B   
