@@ -10,5 +10,4 @@
 40000009Johnny    Aguilar   108002347405779Guwov View,Wurharta,YT,S6I 8E2                           COMP354 420174 B+  
 40000013Olive     Spencer   111002884154350Imeic Heights,Sepedpat,NB,R4J 9J8                        COMP445 220144 B   
 40000015Corey     Hughes    110004217404213Kuagu Boulevard,Nipogse,BC,R4T 8O2                       COMP445 220154 B   
-40000015Corey     Hughes    110004217404213Kuagu Boulevard,Nipogse,BC,R4T 8O2                       COMP445 220154 B   
 40000016Irene     Byrd      114008569278008Ozmu Point,Rasjuvde,NB,K8T 5N3                           COMP335 420163 B   

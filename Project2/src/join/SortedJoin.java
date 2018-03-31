@@ -44,15 +44,10 @@ public class SortedJoin {
 
 		int startPointer1 = 0;
 		int startPointer2 = 0;
-		
-
-		inChannel1.read(buffer1);
-		inChannel2.read(buffer2);
-		
-		startPointer1 = startPointer1 + (buffer1.position() / (Constants.TUPLE_SIZE_IN_BYTES_T1 + lineSeparatorLength));
+				
+		inChannel2.read(buffer2);		
 		startPointer2 = startPointer2 + (buffer2.position() / (Constants.TUPLE_SIZE_IN_BYTES_T2 + lineSeparatorLength));
 		
-		buffer1.flip();
 		buffer2.flip();
 		
 		record1 = new byte[Constants.TUPLE_SIZE_IN_BYTES_T1 + lineSeparatorLength];
@@ -61,8 +56,13 @@ public class SortedJoin {
 		buffer2.get(record2);
 		int i = 0;
 
-		while (startPointer1 < noOfRecordsInFile1) {
-			
+		while (startPointer1 < noOfRecordsInFile1 ) {
+			buffer1.clear();
+			inChannel1.read(buffer1);
+			startPointer1 = startPointer1
+					+ (buffer1.position() / (Constants.TUPLE_SIZE_IN_BYTES_T1 + lineSeparatorLength));
+			buffer1.flip();
+
 			
 			while (buffer1.hasRemaining()) {
 				byte[] studentID1 = Arrays.copyOfRange(record1, 0, 8);
@@ -125,12 +125,7 @@ public class SortedJoin {
 				}
 
 			}
-			buffer1.clear();
-			inChannel1.read(buffer1);
-			startPointer1 = startPointer1
-					+ (buffer1.position() / (Constants.TUPLE_SIZE_IN_BYTES_T1 + lineSeparatorLength));
-			buffer1.flip();
-
+			
 		}
 
 		if (temp != null) {

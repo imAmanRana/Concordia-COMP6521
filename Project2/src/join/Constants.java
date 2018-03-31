@@ -18,7 +18,7 @@ public class Constants
 	 *	use this when -Xmx5m parameter is used for JVM
 	 */
 	//5242880
-public static final int MAIN_MEMORY_SIZE = 1000;
+public static final int MAIN_MEMORY_SIZE = 5242880;
 public static final int MEMORY_UTILIZATION = 100;
 	
 	
