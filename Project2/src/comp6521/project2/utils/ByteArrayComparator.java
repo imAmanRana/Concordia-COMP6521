@@ -1,4 +1,4 @@
-package join;
+package comp6521.project2.utils;
 import java.util.Comparator;
 
 /**
@@ -19,14 +19,14 @@ public class ByteArrayComparator implements Comparator<byte[]> {
 			return -1;
 		else {
 
-			for (int i = 0, j = 0; i < left.length && j < right.length; i++, j++) {
+			for (int i = 0, j = 0; i < Constants.STUDENT_ID_LENGTH && j < Constants.STUDENT_ID_LENGTH; i++, j++) {
 				int a = (left[i] & 0xff);
 				int b = (right[j] & 0xff);
 				if (a != b) {
 					return b - a;
 				}
 			}
-			return right.length - left.length;
+			return 0;
 		}
 	}
 

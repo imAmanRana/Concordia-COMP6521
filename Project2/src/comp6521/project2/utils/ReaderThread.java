@@ -1,4 +1,4 @@
-package join;
+package comp6521.project2.utils;
 
 import java.io.File;
 import java.io.FileInputStream;

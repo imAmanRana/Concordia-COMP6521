@@ -1,0 +1,12 @@
+use writer thread to write to file
+NestedJoin.java -> delete temp
+SortedJoin.java -> assign null to file object 
+SortedJoin.java -> no need for startpointer2
+
+
+
+
+NestedJoin
+T1 records - 17301  
+T2 records - 64079  
+Final output - 14539

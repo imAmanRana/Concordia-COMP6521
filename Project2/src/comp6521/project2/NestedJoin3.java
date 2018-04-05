@@ -1,4 +1,4 @@
-package join;
+package comp6521.project2;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,10 +12,10 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-import join.Constants;
+import comp6521.project2.utils.Constants;
+import comp6521.project2.utils.Utils;
 
 public class NestedJoin3 {
-	Utils u = new Utils();
 	int output_counter = 0;
 	
 	
@@ -81,7 +81,7 @@ System.out.println(file2.length());
 			byte [] b = Arrays.copyOfRange(fileContent1, jj, jj+101);
 			if(a!=null&& b!=null)
 			{
-			if(u.compare(a,b))
+			if(Utils.compare(a,b))
 			{
 				if(output_counter != Constants.TUPPLE_FOR_JOINED_OUTPUT)
 				{
