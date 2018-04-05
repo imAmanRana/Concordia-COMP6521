@@ -46,9 +46,10 @@ public class Main {
 						Constants.TUPPLES_IN_BUFFER_T2_SORT);
 				break;
 			case "4":
+				Utils.clearFile(new File(Constants.GRADES_FILE));
 				SortedJoin sortedjoin = new SortedJoin();
 				start = System.nanoTime();
-				sortedjoin.sortJoin(Constants.OUTPUT_FILE1, Constants.OUTPUT_FILE2, Constants.FINAL_SORT_JOIN_OUTPUT);
+				sortedjoin.sortJoin(Constants.OUTPUT_FILE1, Constants.OUTPUT_FILE2, Constants.FINAL_SORT_JOIN_OUTPUT,Constants.GRADES_FILE);
 				end = System.nanoTime();
 				System.out.println("Sorted Join: " + (end - start) / 1_000_000_000 + " seconds");
 				break;
