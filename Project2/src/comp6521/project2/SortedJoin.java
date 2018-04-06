@@ -18,61 +18,59 @@ public class SortedJoin {
 
 	public void sortJoin(String inputFile1, String inputFile2, String outputFile,final String gradesFile) throws IOException {
 
-		System.out.println(Constants.TUPPLES_IN_BUFFER_T1_NESTED_JOIN + "  "
-				+ Constants.TUPPLES_IN_BUFFER_T2_NESTED_JOIN + "  " + Constants.TUPPLE_FOR_JOINED_OUTPUT);
-
+System.out.println(Constants.TUPPLES_IN_BUFFER_T1_SORTED_JOIN+" "+Constants.TUPPLES_IN_BUFFER_T2_SORTED_JOIN+" "+
+		Constants.TUPPLE_FOR_SORTED_JOINED_OUTPUT+" "+Constants.TUPPLE_FOR_GARDES_OUTPUT);
 		int noOfRecordsInFile1 = Utils.findRecordsInFile(inputFile1,
 				(Constants.TUPLE_SIZE_IN_BYTES_T1 + Constants.LINE_SEPARATOR_LENGTH));
 		
-		System.out.println("Records in file1 : "+noOfRecordsInFile1);
-
-		ByteBuffer temp = null;
 
 		try (ReadableByteChannel inChannel1 = Channels.newChannel(new FileInputStream(inputFile1));
 				ReadableByteChannel inChannel2 = Channels.newChannel(new FileInputStream(inputFile2));
 				WritableByteChannel outChannel = Channels.newChannel(new FileOutputStream(outputFile));
 				WritableByteChannel gradesChannel = Channels.newChannel(new FileOutputStream(gradesFile))) {
 
-			ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.TUPPLES_IN_BUFFER_T1_NESTED_JOIN
+			ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.TUPPLES_IN_BUFFER_T1_SORTED_JOIN
 					* (Constants.TUPLE_SIZE_IN_BYTES_T1 + Constants.LINE_SEPARATOR_LENGTH));
-			ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.TUPPLES_IN_BUFFER_T2_NESTED_JOIN
+			ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.TUPPLES_IN_BUFFER_T2_SORTED_JOIN
 					* (Constants.TUPLE_SIZE_IN_BYTES_T2 + Constants.LINE_SEPARATOR_LENGTH));
 
-			ByteBuffer outputBuffer = ByteBuffer.allocateDirect(Constants.TUPPLE_FOR_JOINED_OUTPUT
+			ByteBuffer outputBuffer = ByteBuffer.allocateDirect(Constants.TUPPLE_FOR_SORTED_JOINED_OUTPUT
 					* (Constants.TUPLE_SIZE_IN_BYTES_T1 + Constants.TUPLE_SIZE_IN_BYTES_T2 - Constants.STUDENT_ID_LENGTH
 							+ Constants.LINE_SEPARATOR_LENGTH));
-			ByteBuffer gradesBuffer = ByteBuffer.allocateDirect(Constants.TUPPLE_FOR_JOINED_OUTPUT
+			ByteBuffer gradesBuffer = ByteBuffer.allocateDirect(Constants.TUPPLE_FOR_GARDES_OUTPUT
 					* (Constants.TUPLE_SIZE_IN_BYTES_T1 + Constants.TUPLE_SIZE_IN_BYTES_T2 - Constants.STUDENT_ID_LENGTH
 							+ Constants.LINE_SEPARATOR_LENGTH));
 
 			byte[] record1;
 			byte[] record2;
-			byte[] gradesRecord;
 
 			int startPointer1 = 0;
 
 			inChannel2.read(buffer2);
-
 			buffer2.flip();
 
 			record1 = new byte[Constants.TUPLE_SIZE_IN_BYTES_T1 + Constants.LINE_SEPARATOR_LENGTH];
 			record2 = new byte[Constants.TUPLE_SIZE_IN_BYTES_T2 + Constants.LINE_SEPARATOR_LENGTH];
-			gradesRecord = new byte[Constants.TUPLE_SIZE_IN_BYTES_GRADES + Constants.LINE_SEPARATOR_LENGTH];
-			int studentId_OLD;
+			
+			int studentId_OLD=0;
 			int studentId_NEW;
 			int denominator=0;
 			float numerator = 0;
 			buffer2.get(record2);
+			
 			while (startPointer1 < noOfRecordsInFile1) {
+				
 				buffer1.clear();
 				inChannel1.read(buffer1);
+				
 				startPointer1 += (buffer1.position()
 						/ (Constants.TUPLE_SIZE_IN_BYTES_T1 + Constants.LINE_SEPARATOR_LENGTH));
-				System.out.println("-> "+startPointer1);
+				
 				buffer1.flip();
 				studentId_OLD = Utils.getIntegerData(record1,0,8);
-				while (buffer1.hasRemaining() || bac.compare(record1, record2)==0) {
-					
+				
+				
+				while (buffer1.hasRemaining() || bac.compare(record1, record2)==0) {					
 					int value = bac.compare(record1, record2);
 					
 					if (value == 0) // ids are equal
@@ -81,39 +79,27 @@ public class SortedJoin {
 						if(studentId_OLD==studentId_NEW) {
 							int credit = Utils.getIntegerData(record2, 21, 2);
 							String grade = Utils.getStringData(record2, 23, 4);
-							
+							//System.out.println(new String(grade));
 							numerator += credit*Utils.gradeToMarks(grade);
-							denominator+= credit;
-							
-						}else {
+							denominator+= credit;							
 						}
+						
 						if (outputBuffer.position() < outputBuffer.capacity()) {
 							outputBuffer.put(Utils.combine(record1, record2));
 						} else {
-							
-							temp = ByteBuffer
-									.allocateDirect(Constants.TUPLE_SIZE_IN_BYTES_T1 + Constants.TUPLE_SIZE_IN_BYTES_T2
-											- Constants.STUDENT_ID_LENGTH + Constants.LINE_SEPARATOR_LENGTH);
-
-							temp = Utils.combine(record1, record2);
 							outputBuffer.flip();
-
 							outChannel.write(outputBuffer);
 							outputBuffer.clear();
-							if(temp!=null) {
-								outputBuffer.put(temp);
-								temp=null;
-							}
+							outputBuffer.put(Utils.combine(record1, record2));			
 						}
 						
 						if (buffer2.hasRemaining()) {
 							buffer2.get(record2);
-						} // id in t1 is bigger
-						else {
+						} 
+						else {								// id in t1 is bigger
 							buffer2.clear();
 							inChannel2.read(buffer2);
 							buffer2.flip();
-
 						}
 					
 					} else if (value > 0) // id in t2 is bigger
@@ -141,28 +127,33 @@ public class SortedJoin {
 							buffer1.flip();
 
 						}
-					} else {
+					}
+					else {						// id in t1 is bigger
 						if (buffer2.hasRemaining())
-							buffer2.get(record2); // id in t1 is bigger
+							buffer2.get(record2); 
 						else {
 							buffer2.clear();
 							inChannel2.read(buffer2);
 							buffer2.flip();
 						}
-
 					}
 				}
+				System.out.println(startPointer1);
 			}
 			if (outputBuffer.position() > 0) {
 				outputBuffer.flip();
 				outChannel.write(outputBuffer);
 				outputBuffer = null;
 			}
+			if(denominator>0) {
+				gradesBuffer.put(Utils.convertToBuffer(studentId_OLD,String.format("%.2f", numerator/denominator).getBytes()));
+			}
 			if (gradesBuffer.position() > 0) {
 				gradesBuffer.flip();
 				gradesChannel.write(gradesBuffer);
 				gradesBuffer = null;
 			}
+			
 		}
 	}
 
