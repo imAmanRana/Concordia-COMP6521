@@ -21,6 +21,7 @@ public class ReaderThread implements Runnable {
 	private final File file;
 	private final byte[][] tuples;
 	private final int tupleSize;
+	private static int diskRead=0;
 
 	public ReaderThread(int startPoint, int recordsToRead, File file, byte[][] tuples,int tupleSize) {
 		this.startPoint = startPoint;
@@ -32,14 +33,14 @@ public class ReaderThread implements Runnable {
 
 	@Override
 	public void run() {
-		int lineSize = tupleSize + Constants.LINE_SEPARATOR_LENGTH;
+		int lineSize = tupleSize;
 		try (FileInputStream in = new FileInputStream(file); ReadableByteChannel inChannel = Channels.newChannel(in);) {
-
+			diskRead++;
 			
 			in.skip(startPoint*lineSize);
 
 			ByteBuffer buffer = ByteBuffer
-					.allocateDirect(recordsToRead * (tupleSize + Constants.LINE_SEPARATOR_LENGTH));
+					.allocateDirect(recordsToRead * (tupleSize));
 
 			byte[] receive = new byte[lineSize];
 			int counter = 0;
@@ -51,14 +52,16 @@ public class ReaderThread implements Runnable {
 					buffer.get(receive);
 					tuples[counter++] = receive;
 					receive = null;
-					receive = new byte[tupleSize + Constants.LINE_SEPARATOR_LENGTH];
+					receive = new byte[tupleSize];
 				}
-
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 	}
-
+	
+	public int getDiskRead() {
+		return diskRead;
+	}
 }

@@ -3,8 +3,6 @@ package comp6251;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 
 /**
  * 
@@ -17,6 +15,7 @@ import java.nio.channels.FileChannel;
 public class WriterThread implements Runnable {
 	private final byte[][] tuples;
 	private final File file;
+	private static int diskWrite=0;
 
 	public WriterThread(byte[][] tuples, File file) {
 		this.tuples = tuples;
@@ -30,6 +29,7 @@ public class WriterThread implements Runnable {
 	 */
 	@Override
 	public void run() {
+		diskWrite++;
 		try (FileOutputStream stream = new FileOutputStream(file, true);) {
 			for (int i = 0; i < tuples.length; i++) {
 				if (tuples[i] == null)
@@ -40,6 +40,10 @@ public class WriterThread implements Runnable {
 			e.printStackTrace();
 		} finally {
 		}
+	}
+	
+	public int getDiskWrite() {
+		return diskWrite;
 	}
 
 }

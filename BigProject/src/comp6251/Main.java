@@ -38,9 +38,9 @@ public class Main {
 			case "1":
 				clearFile(new File(Constants.NESTEDJOIN_OUTPUT_FILE));
 				long start = System.nanoTime();
-				//performNestedJoin(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),
-				//		new File(Constants.NESTEDJOIN_OUTPUT_FILE));
-				optimized(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),new File(Constants.NESTEDJOIN_OUTPUT_FILE));
+				performNestedJoin(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),
+						new File(Constants.NESTEDJOIN_OUTPUT_FILE));
+				//optimized(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),new File(Constants.NESTEDJOIN_OUTPUT_FILE));
 				long end = System.nanoTime();
 				System.out.println("Sublist Sort : " + (end - start) / 1_000_000_000 + " seconds");
 				break;
@@ -57,10 +57,11 @@ public class Main {
 			case "4":
 				clearFile(new File(Constants.GRADES_FILE));
 				clearFile(new File(Constants.SORTEDJOIN_OUTPUT_FILE));
+				System.out.println("Sorted Join");
 				start = System.nanoTime();
 				performSortedJoin(new File(Constants.SORTED_T1),new File(Constants.SORTED_T2),new File(Constants.SORTEDJOIN_OUTPUT_FILE),new File(Constants.GRADES_FILE));
 				end = System.nanoTime();
-				System.out.println("Sorted Join : " + (end - start) / 1_000_000_000 + " seconds");
+				System.out.println("Time : " + (end - start) / 1_000_000_000 + " seconds");
 				break;
 			default:
 				printHelp();
@@ -79,26 +80,30 @@ public class Main {
 				WritableByteChannel gradesChannel = Channels.newChannel(new FileOutputStream(gradesFile))) {
 
 			ByteBuffer buffer1 = ByteBuffer.allocateDirect(Constants.T1_TUPPLES_IN_BUFFER_FOR_SORTEDJOIN
-					* (Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
+					* (Constants.TUPPLE_SIZE_T1));
 			ByteBuffer buffer2 = ByteBuffer.allocateDirect(Constants.T2_TUPPLES_IN_BUFFER_FOR_SORTEDJOIN
-					* (Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH));
+					* (Constants.TUPPLE_SIZE_T2));
 
 			ByteBuffer outputBuffer = ByteBuffer.allocateDirect(Constants.T3_TUPPLES_IN_BUFFER_FOR_SORTEDJOIN
-					* (Constants.TUPPLE_SIZE_T3 + Constants.LINE_SEPARATOR_LENGTH));
+					* (Constants.TUPPLE_SIZE_T3));
 			ByteBuffer gradesBuffer = ByteBuffer.allocateDirect(Constants.GRADE_TUPPLES_IN_BUFFER_FOR_SORTEDJOIN
-					* (Constants.TUPPLE_SIZE_GRADES + Constants.LINE_SEPARATOR_LENGTH));
+					* (Constants.TUPPLE_SIZE_GRADES));
 
 			byte[] record1;
 			byte[] record2;
+			int diskRead=0;
+			int diskWrite=0;
+			int gpaDiskWrite=0;
 			int noOfRecordsInFile1 = findRecordsInFile(sortedT1,
-					(Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
+					(Constants.TUPPLE_SIZE_T1));
 			int startPointer1 = 0;
 
 			inChannel2.read(buffer2);
+			diskRead++;
 			buffer2.flip();
 
-			record1 = new byte[Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH];
-			record2 = new byte[Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH];
+			record1 = new byte[Constants.TUPPLE_SIZE_T1];
+			record2 = new byte[Constants.TUPPLE_SIZE_T2];
 			
 			int oldStudentId=0;
 			int newStudentId;
@@ -110,9 +115,10 @@ public class Main {
 				
 				buffer1.clear();
 				inChannel1.read(buffer1);
+				diskRead++;
 				
 				startPointer1 += (buffer1.position()
-						/ (Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
+						/ (Constants.TUPPLE_SIZE_T1));
 				
 				buffer1.flip();
 				oldStudentId = getIntegerData(record1,0,8);
@@ -137,6 +143,7 @@ public class Main {
 							outputBuffer.flip();
 							outChannel.write(outputBuffer);
 							outputBuffer.clear();
+							diskWrite++;
 							outputBuffer.put(combine(record1, record2));			
 						}
 						
@@ -147,6 +154,8 @@ public class Main {
 							buffer2.clear();
 							inChannel2.read(buffer2);
 							buffer2.flip();
+							buffer2.get(record2);
+							diskRead++;
 						}
 					
 					} else if (value > 0) // id in t2 is bigger
@@ -159,6 +168,7 @@ public class Main {
 									gradesBuffer.flip();
 									gradesChannel.write(gradesBuffer);
 									gradesBuffer.clear();
+									gpaDiskWrite++;
 								}
 								gradesBuffer.put(convertToBuffer(oldStudentId,String.format("%.2f", numerator/denominator).getBytes()));
 							}
@@ -170,8 +180,10 @@ public class Main {
 							buffer1.clear();
 							inChannel1.read(buffer1);
 							startPointer1 += (buffer1.position()
-									/ (Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
+									/ (Constants.TUPPLE_SIZE_T1));
 							buffer1.flip();
+							buffer1.get(record1);
+							diskRead++;
 
 						}
 					}
@@ -182,6 +194,8 @@ public class Main {
 							buffer2.clear();
 							inChannel2.read(buffer2);
 							buffer2.flip();
+							buffer2.get(record2);
+							diskRead++;
 						}
 					}
 				}
@@ -190,6 +204,7 @@ public class Main {
 				outputBuffer.flip();
 				outChannel.write(outputBuffer);
 				outputBuffer = null;
+				diskWrite++;
 			}
 			if(denominator>0) {
 				gradesBuffer.put(convertToBuffer(oldStudentId,String.format("%.2f", numerator/denominator).getBytes()));
@@ -198,7 +213,13 @@ public class Main {
 				gradesBuffer.flip();
 				gradesChannel.write(gradesBuffer);
 				gradesBuffer = null;
+				gpaDiskWrite++;
 			}
+			
+			
+			System.out.println("Disk Read : "+diskRead);
+			System.out.println("Disk Write : "+diskWrite);
+			System.out.println("GPA Disk Write : "+gpaDiskWrite);
 			
 		}
 	}
@@ -292,14 +313,16 @@ public class Main {
 
 		// sublist sorting file 1
 		long start = System.nanoTime();
-		sortSublist(inputFile, intermediateFile,tuplesInBuffer,tupleSize);
+		System.out.println("Sublist Sorting");
+		sortSublist(inputFile, intermediateFile,(int)((tupleSize==Constants.TUPPLE_SIZE_T2?(.65):1)*tuplesInBuffer),tupleSize);
 		long end = System.nanoTime();
-		System.out.println("Sublist Sort : " + (end - start) / 1_000_000_000 + " seconds");
-
+		System.out.println("Time : " + (end - start) / 1_000_000_000 + " seconds");
+		System.out.println();
 		start = System.nanoTime();
+		System.out.println("Sublist Merging");
 		mergeSublist(intermediateFile, outputFile,tuplesInBuffer,tupleSize);
 		end = System.nanoTime();
-		System.out.println("Merging : " + (end - start) / 1_000_000_000 + " seconds");
+		System.out.println("Time : " + (end - start) / 1_000_000_000 + " seconds");
 
 	}
 	
@@ -316,18 +339,12 @@ public class Main {
 	private static void mergeSublist(File inputFile, File outputFile,int tuplesInBuffer,int tupleSize ) {
 
 		int noOfSublists = (int) Math.ceil((double) inputFile.length()
-				/ ((tupleSize + Constants.LINE_SEPARATOR_LENGTH)
+				/ ((tupleSize)
 						* tuplesInBuffer));
-		
-		System.out.println("input file length : "+inputFile.length()+"\nno of sublists: "+noOfSublists);
-		System.out.println("tuple size : "+tupleSize);
-		System.out.println("tuplesInBuffer : "+tuplesInBuffer);
-		
 		int[] recordsFetched = new int[noOfSublists];
 		int[] startPoint = new int[noOfSublists];
 		int recordsToRead = (int) ((double) tuplesInBuffer / (noOfSublists * 2));
 		recordsToRead = recordsToRead == 0 ? 1 : recordsToRead;
-
 		for (int i = 0; i < noOfSublists; i++) {
 			startPoint[i] = i * tuplesInBuffer;
 		}
@@ -438,6 +455,11 @@ public class Main {
 			}
 
 		}
+		
+		{
+			System.out.println("Disk Write : "+new WriterThread(new byte[1][], outputFile).getDiskWrite());
+			System.out.println("Disk Read : "+new ReaderThread(0,0,inputFile,new byte[1][], 0).getDiskRead());
+		}
 
 	}
 	
@@ -457,21 +479,22 @@ public class Main {
 		try (ReadableByteChannel inChannel = Channels.newChannel(new FileInputStream(inputFile));
 				FileChannel outChannel = new FileOutputStream(outputFile).getChannel()) {
 			ByteBuffer buffer = ByteBuffer.allocateDirect(
-					tuplesInBuffer * (tupleSize+ Constants.LINE_SEPARATOR_LENGTH));
+					tuplesInBuffer * (tupleSize));
 
-			byte[] receive = new byte[tupleSize + Constants.LINE_SEPARATOR_LENGTH];
+			byte[] receive = new byte[tupleSize];
 
 			byte[][] tuples = new byte[tuplesInBuffer][];
 			int counter = 0;
+			int diskRead=0;
+			int diskWrite=0;
 			while (inChannel.read(buffer) > 0) {
-
+				diskRead++;
 				buffer.flip();
 				// read buffer
 				while (buffer.hasRemaining()) {
 					buffer.get(receive);
 					tuples[counter++] = receive;
-					receive = null;
-					receive = new byte[tupleSize+ Constants.LINE_SEPARATOR_LENGTH];
+					receive = new byte[tupleSize]; 
 				}
 
 				if (tuples.length == tuplesInBuffer) {
@@ -486,40 +509,19 @@ public class Main {
 					buffer.flip();
 					outChannel.write(buffer);
 					buffer.clear();
+					diskWrite++;
 					tuples = null;
 					tuples = new byte[tuplesInBuffer][];
 				}
 
 			}
+			
+			System.out.println("Disk Read : "+diskRead);
+			System.out.println("Disk Write : "+diskWrite);
+			
+			
 		}
 	}
-	
-	private static void optimized(File inputFile1, File inputFile2, File outputFile) throws IOException {
-		try (FileInputStream in1 = new FileInputStream(inputFile1);
-				FileOutputStream out = new FileOutputStream(outputFile);) {
-
-			byte[] receive1 = new byte[Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH];
-			byte[] receive2;
-			while (in1.read(receive1) > 0) {
-				try (FileInputStream in2 = new FileInputStream(inputFile2)) {
-					 receive2 = new byte[Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH];
-					while (in2.read(receive2) > 0) {
-						if (bac.compare(receive1, receive2) == 0) {
-							System.out.println("equal");
-							out.write(combine(receive1, receive2));
-						}
-						receive2  = new byte[Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH];
-						
-					}
-
-				}
-				receive1=new byte[Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH];;
-			}
-
-		}
-	}
-	
-	
 	
 	private static void performNestedJoin(File inputFile1, File inputFile2, File outputFile) throws IOException {
 
@@ -527,11 +529,11 @@ public class Main {
 				InputStream ins = new FileInputStream(inputFile2);
 				FileChannel outputChannel = new FileOutputStream(outputFile).getChannel();) {
 			ByteBuffer buffer1 = ByteBuffer.allocateDirect(
-					Constants.T1_TUPPLES_IN_BUFFER_FOR_NESTED * (Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
+					Constants.T1_TUPPLES_IN_BUFFER_FOR_NESTED * (Constants.TUPPLE_SIZE_T1));
 			ByteBuffer buffer2 = ByteBuffer.allocateDirect(
-					Constants.T2_TUPPLES_IN_BUFFER_FOR_NESTED * (Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH));
+					Constants.T2_TUPPLES_IN_BUFFER_FOR_NESTED * (Constants.TUPPLE_SIZE_T2));
 			ByteBuffer outputBuffer = ByteBuffer.allocateDirect(
-					Constants.T3_TUPPLES_IN_BUFFER_FOR_NESTED * (Constants.TUPPLE_SIZE_T3 + Constants.LINE_SEPARATOR_LENGTH));
+					Constants.T3_TUPPLES_IN_BUFFER_FOR_NESTED * (Constants.TUPPLE_SIZE_T3));
 
 			byte[] receive1 = null;
 			byte[] receive2 = null;
@@ -545,7 +547,7 @@ public class Main {
 				counter = 0;
 				tuplesT1 = new byte[Constants.T1_TUPPLES_IN_BUFFER_FOR_NESTED][];
 				while (buffer1.hasRemaining()) {
-					receive1 = new byte[Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH];
+					receive1 = new byte[Constants.TUPPLE_SIZE_T1];
 					buffer1.get(receive1);
 					tuplesT1[counter++] = receive1;
 				}
@@ -558,7 +560,7 @@ public class Main {
 						counter = 0;
 						tuplesT2 = new byte[Constants.T2_TUPPLES_IN_BUFFER_FOR_NESTED][];
 						while (buffer2.hasRemaining()) {
-							receive2=new byte[Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH];
+							receive2=new byte[Constants.TUPPLE_SIZE_T2];
 							buffer2.get(receive2);
 							tuplesT2[counter++] = receive2;
 						}
@@ -587,15 +589,13 @@ public class Main {
 
 						tuplesT2 = null;
 						buffer2 = ByteBuffer.allocateDirect(Constants.T2_TUPPLES_IN_BUFFER_FOR_NESTED
-								* (Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH));
-						System.out.println("reading b2 again: "+(readt2++));
+								* (Constants.TUPPLE_SIZE_T2));
 
 					}
 				}
 				tuplesT1 = null;
 				buffer1 = ByteBuffer.allocateDirect(
-						Constants.T1_TUPPLES_IN_BUFFER_FOR_NESTED * (Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
-				System.out.println("read b1 again: "+(readt1++));
+						Constants.T1_TUPPLES_IN_BUFFER_FOR_NESTED * (Constants.TUPPLE_SIZE_T1));
 			}
 
 			if (outputBuffer.position() > 0) {
