@@ -30,6 +30,7 @@ public class Constants {
 	public static final String NESTEDJOIN_OUTPUT_FILE = "A:\\TEMP\\MiniProject2_6521\\nestedJoin.txt";
 	public static final String GRADES_FILE = "A:\\TEMP\\MiniProject2_6521\\grades.txt";
 	public static final String SORTEDJOIN_OUTPUT_FILE = "A:\\TEMP\\MiniProject2_6521\\sortedJoin.txt";
+	public static final String NESTED_GPA_FILE = "A:\\TEMP\\MiniProject2_6521\\nestedGpa.txt";
 	
 	public static final int STUDENT_ID_LENGTH = 8; 
 	public static final int TUPPLE_SIZE_T3 = TUPPLE_SIZE_T1+TUPPLE_SIZE_T2-STUDENT_ID_LENGTH;

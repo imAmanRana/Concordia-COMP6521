@@ -40,7 +40,7 @@ public class Main {
 				long start = System.nanoTime();
 				performNestedJoin(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),
 						new File(Constants.NESTEDJOIN_OUTPUT_FILE));
-				//optimized(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),new File(Constants.NESTEDJOIN_OUTPUT_FILE));
+				//nestedGpaCalculation(new File(Constants.SORTEDJOIN_OUTPUT_FILE),new File(Constants.NESTED_GPA_FILE));
 				long end = System.nanoTime();
 				System.out.println("Sublist Sort : " + (end - start) / 1_000_000_000 + " seconds");
 				break;
@@ -662,4 +662,60 @@ public class Main {
 		System.out.println("4 - Sort Based Join for  :" + Constants.INPUT_FILE1 + " & " + Constants.INPUT_FILE2);
 	}
 
+	
+	public static void nestedGpaCalculation(File inputFile, File outputFile) throws IOException{
+		try (ReadableByteChannel inChannel1 = Channels.newChannel(new FileInputStream(inputFile));
+				FileChannel outputChannel = new FileOutputStream(outputFile).getChannel()) {
+			ByteBuffer buffer = ByteBuffer
+					.allocateDirect((int) (((Constants.MEMORY_UTILIZATION*.01) * Constants.AVAILABLE_MEMORY) / (Constants.TUPPLE_SIZE_T3+Constants.LINE_SEPARATOR_LENGTH)));
+			ByteBuffer outputBuffer = ByteBuffer
+					.allocateDirect((int) (((100-Constants.MEMORY_UTILIZATION)*.01) * Constants.AVAILABLE_MEMORY) / (Constants.TUPPLE_SIZE_GRADES+Constants.LINE_SEPARATOR_LENGTH));
+			int diskWrite=0;
+			int oldStudentId=0;
+			int newStudentId;
+			int denominator=0;
+			float numerator = 0;
+			byte[] receive = null;
+			String oldGrade;
+			int oldCredit;
+			while (inChannel1.read(buffer) > 0) {
+				buffer.flip();
+				receive = new byte[Constants.TUPPLE_SIZE_T3+Constants.LINE_SEPARATOR_LENGTH];
+				buffer.get(receive);
+				oldStudentId = getIntegerData(receive,0,8);
+				oldCredit = getIntegerData(receive, 113, 2);
+				oldGrade = getStringData(receive, 115, 4);
+				numerator += oldCredit*gradeToMarks(oldGrade);
+				denominator+= oldCredit;
+				while (buffer.hasRemaining()) {
+					
+					buffer.get(receive);
+					newStudentId = getIntegerData(receive,0,8);
+					
+					if(oldStudentId==newStudentId) {
+						int credit = getIntegerData(receive, 113, 2);
+						String grade = getStringData(receive, 115, 4);
+						numerator += credit*gradeToMarks(grade);
+						denominator+= credit;
+					}else {
+						if (outputBuffer.position() == outputBuffer.capacity()) {
+							outputBuffer.flip();
+							outputChannel.write(outputBuffer);
+							outputBuffer.clear();
+							diskWrite++;
+						}
+						//outputBuffer.put(convertToBuffer(newStudentId, gpa));
+					}
+					
+					
+					
+					
+					
+				}
+			}
+		}
+		
+	}
+	
+	
 }
