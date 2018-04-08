@@ -542,8 +542,6 @@ public class Main {
 			int counter = 0;
 			byte[][] tuplesT1 = null;
 			byte[][] tuplesT2 = null;
-			int readt2=0;
-			int readt1=0;
 			outer: while (inChannel1.read(buffer1) > 0) {
 				buffer1.flip();
 				counter = 0;
@@ -707,16 +705,8 @@ public class Main {
 						}
 						//outputBuffer.put(convertToBuffer(newStudentId, gpa));
 					}
-					
-					
-					
-					
-					
 				}
 			}
 		}
-		
 	}
-	
-	
 }

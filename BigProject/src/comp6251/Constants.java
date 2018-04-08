@@ -17,10 +17,6 @@ public class Constants {
 	public static final int BLOCK_SIZE = 4096;
 	public static final int LINE_SEPARATOR_LENGTH = System.lineSeparator().getBytes().length;
 	
-//	public static final String INPUT_FILE1 = "A:\\CodingStuff\\Eclipse_Workspaces\\AdvDatabase\\BigProject\\resources\\MY_JoinT1.txt";
-//	public static final String INPUT_FILE2 = "A:\\CodingStuff\\Eclipse_Workspaces\\AdvDatabase\\BigProject\\resources\\MY_JoinT2.txt";
-//	public static final String NESTEDJOIN_OUTPUT_FILE = "A:\\CodingStuff\\Eclipse_Workspaces\\AdvDatabase\\BigProject\\resources\\nestedOutput.txt";
-
 	public static final String INPUT_FILE1 = "A:\\TEMP\\MiniProject2_6521\\MY_JoinT1.txt";
 	public static final String INPUT_FILE2 = "A:\\TEMP\\MiniProject2_6521\\MY_JoinT2.txt";
 	public static final String INTERMEDIATE_T1 = "A:\\TEMP\\MiniProject2_6521\\intermediateT1.txt";
@@ -52,4 +48,3 @@ public class Constants {
 	public static final int GRADE_TUPPLES_IN_BUFFER_FOR_SORTEDJOIN = (int)((.10)*GRADE_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
 	
 }
-
