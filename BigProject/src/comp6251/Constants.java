@@ -33,7 +33,7 @@ public class Constants {
 	
 	public static final int STUDENT_ID_LENGTH = 8; 
 	public static final int TUPPLE_SIZE_T3 = TUPPLE_SIZE_T1+TUPPLE_SIZE_T2-STUDENT_ID_LENGTH;
-	public static final int AVAILABLE_MEMORY = (int)(MAIN_MEMORY*((double)70/100));
+	public static final int AVAILABLE_MEMORY = (int)(MAIN_MEMORY*((double)MEMORY_UTILIZATION/100));
 	public static final int T1_TUPPLES_IN_BLOCK = BLOCK_SIZE/TUPPLE_SIZE_T1;
 	public static final int T2_TUPPLES_IN_BLOCK = BLOCK_SIZE/TUPPLE_SIZE_T2;
 	public static final int T3_TUPPLES_IN_BLOCK = BLOCK_SIZE/TUPPLE_SIZE_T3;
@@ -43,24 +43,12 @@ public class Constants {
 	public static final int T3_TUPPLES_IN_BUFFER_FOR_NESTED = (int)((.20)*T3_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
 	
 	public static final int T1_TUPPLES_IN_BUFFER_FOR_SORT = (int)(T1_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
-	public static final int T2_TUPPLES_IN_BUFFER_FOR_SORT = (int)(T2_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
+	public static final int T2_TUPPLES_IN_BUFFER_FOR_SORT = (int)((.60)*(T2_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE)));
 	
 	public static final int T1_TUPPLES_IN_BUFFER_FOR_SORTEDJOIN = (int)((.30)*T1_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
 	public static final int T2_TUPPLES_IN_BUFFER_FOR_SORTEDJOIN = (int)((.30)*T2_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
 	public static final int T3_TUPPLES_IN_BUFFER_FOR_SORTEDJOIN = (int)((.30)*T3_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
 	public static final int GRADE_TUPPLES_IN_BUFFER_FOR_SORTEDJOIN = (int)((.10)*GRADE_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
-	
-	public static String stringRepresentation() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Available Memory :  "+AVAILABLE_MEMORY);
-		builder.append("\nTupple size :  "+TUPPLE_SIZE_T2);
-		builder.append("\nTupples in block :  "+T2_TUPPLES_IN_BLOCK);
-		builder.append("\nTupples in buffer :  "+T2_TUPPLES_IN_BUFFER_FOR_SORT);
-		return builder.toString();
-	}
-	
-	
-	
 	
 }
 

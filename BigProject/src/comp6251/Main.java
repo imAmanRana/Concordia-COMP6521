@@ -38,9 +38,9 @@ public class Main {
 			case "1":
 				clearFile(new File(Constants.NESTEDJOIN_OUTPUT_FILE));
 				long start = System.nanoTime();
-				//performNestedJoin(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),
-				//		new File(Constants.NESTEDJOIN_OUTPUT_FILE));
-				optimized(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),new File(Constants.NESTEDJOIN_OUTPUT_FILE));
+				performNestedJoin(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),
+						new File(Constants.NESTEDJOIN_OUTPUT_FILE));
+				//optimized(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),new File(Constants.NESTEDJOIN_OUTPUT_FILE));
 				long end = System.nanoTime();
 				System.out.println("Sublist Sort : " + (end - start) / 1_000_000_000 + " seconds");
 				break;
@@ -90,12 +90,16 @@ public class Main {
 
 			byte[] record1;
 			byte[] record2;
+			int diskRead=0;
+			int diskWrite=0;
+			int gpaDiskWrite=0;
 			int noOfRecordsInFile1 = findRecordsInFile(sortedT1,
 					(Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
 			int startPointer1 = 0;
 
 			inChannel2.read(buffer2);
 			buffer2.flip();
+			diskRead++;
 
 			record1 = new byte[Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH];
 			record2 = new byte[Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH];
@@ -110,6 +114,7 @@ public class Main {
 				
 				buffer1.clear();
 				inChannel1.read(buffer1);
+				diskRead++;
 				
 				startPointer1 += (buffer1.position()
 						/ (Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
@@ -131,14 +136,14 @@ public class Main {
 							denominator+= credit;							
 						}
 						
-						if (outputBuffer.position() < outputBuffer.capacity()) {
-							outputBuffer.put(combine(record1, record2));
-						} else {
+						if (outputBuffer.position() == outputBuffer.capacity()) {
 							outputBuffer.flip();
 							outChannel.write(outputBuffer);
 							outputBuffer.clear();
-							outputBuffer.put(combine(record1, record2));			
+							diskWrite++;
 						}
+						outputBuffer.put(combine(record1, record2));
+						
 						
 						if (buffer2.hasRemaining()) {
 							buffer2.get(record2);
@@ -147,6 +152,8 @@ public class Main {
 							buffer2.clear();
 							inChannel2.read(buffer2);
 							buffer2.flip();
+							buffer2.get(record2);
+							diskRead++;
 						}
 					
 					} else if (value > 0) // id in t2 is bigger
@@ -159,6 +166,7 @@ public class Main {
 									gradesBuffer.flip();
 									gradesChannel.write(gradesBuffer);
 									gradesBuffer.clear();
+									gpaDiskWrite++;
 								}
 								gradesBuffer.put(convertToBuffer(oldStudentId,String.format("%.2f", numerator/denominator).getBytes()));
 							}
@@ -172,6 +180,8 @@ public class Main {
 							startPointer1 += (buffer1.position()
 									/ (Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
 							buffer1.flip();
+							buffer1.get(record1);
+							diskRead++;
 
 						}
 					}
@@ -182,6 +192,8 @@ public class Main {
 							buffer2.clear();
 							inChannel2.read(buffer2);
 							buffer2.flip();
+							buffer2.get(record2);
+							diskRead++;
 						}
 					}
 				}
@@ -190,6 +202,7 @@ public class Main {
 				outputBuffer.flip();
 				outChannel.write(outputBuffer);
 				outputBuffer = null;
+				diskWrite++;
 			}
 			if(denominator>0) {
 				gradesBuffer.put(convertToBuffer(oldStudentId,String.format("%.2f", numerator/denominator).getBytes()));
@@ -198,7 +211,12 @@ public class Main {
 				gradesBuffer.flip();
 				gradesChannel.write(gradesBuffer);
 				gradesBuffer = null;
+				gpaDiskWrite++;
 			}
+			
+			System.out.println("Disk Read : "+diskRead);
+			System.out.println("Disk Write : "+diskWrite);
+			System.out.println("GPA Disk Write : "+gpaDiskWrite);
 			
 		}
 	}
@@ -292,14 +310,16 @@ public class Main {
 
 		// sublist sorting file 1
 		long start = System.nanoTime();
+		System.out.println("Sublist Sorting");
 		sortSublist(inputFile, intermediateFile,tuplesInBuffer,tupleSize);
 		long end = System.nanoTime();
-		System.out.println("Sublist Sort : " + (end - start) / 1_000_000_000 + " seconds");
-
+		System.out.println("Time : " + (end - start) / 1_000_000_000 + " seconds");
+		System.out.println();
+		System.out.println("Sublist Merging");
 		start = System.nanoTime();
 		mergeSublist(intermediateFile, outputFile,tuplesInBuffer,tupleSize);
 		end = System.nanoTime();
-		System.out.println("Merging : " + (end - start) / 1_000_000_000 + " seconds");
+		System.out.println("Time : " + (end - start) / 1_000_000_000 + " seconds");
 
 	}
 	
@@ -319,15 +339,13 @@ public class Main {
 				/ ((tupleSize + Constants.LINE_SEPARATOR_LENGTH)
 						* tuplesInBuffer));
 		
-		System.out.println("input file length : "+inputFile.length()+"\nno of sublists: "+noOfSublists);
-		System.out.println("tuple size : "+tupleSize);
-		System.out.println("tuplesInBuffer : "+tuplesInBuffer);
-		
 		int[] recordsFetched = new int[noOfSublists];
 		int[] startPoint = new int[noOfSublists];
 		int recordsToRead = (int) ((double) tuplesInBuffer / (noOfSublists * 2));
 		recordsToRead = recordsToRead == 0 ? 1 : recordsToRead;
 
+		int diskRead=0;
+		int diskWrite=0;
 		for (int i = 0; i < noOfSublists; i++) {
 			startPoint[i] = i * tuplesInBuffer;
 		}
@@ -348,6 +366,7 @@ public class Main {
 
 			}
 			executor = null;
+			diskRead+=noOfSublists;
 		}
 
 		{
@@ -383,6 +402,7 @@ public class Main {
 						Runnable task = new ReaderThread(startPoint[i], recordsToRead, inputFile, tuples[i],tupleSize);
 						recordsFetched[i] += recordsToRead;
 						startPoint[i] += recordsToRead;
+						diskRead++;
 						Thread t = new Thread(task);
 						t.start();
 						try {
@@ -402,6 +422,7 @@ public class Main {
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
+						diskWrite++;
 						break outer;
 					} else if (j != -1 && tuples[i] != null && tuples[i][j] != null
 							&& bac.compare(tuples[i][j], min) > 0) {
@@ -418,6 +439,7 @@ public class Main {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
+					diskWrite++;
 					break;
 				}
 				currentReadPointer[minList] += 1;
@@ -429,6 +451,7 @@ public class Main {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
+					diskWrite++;
 					currentOutputPointer = 0;
 					sorted = new byte[recordsToRead][];
 					sorted[currentOutputPointer++] = min;
@@ -438,6 +461,8 @@ public class Main {
 			}
 
 		}
+		System.out.println("Disk Read : "+diskRead);
+		System.out.println("Disk Write : "+diskWrite);
 
 	}
 	
@@ -454,6 +479,8 @@ public class Main {
 	 * @throws IOException
 	 */
 	private static void sortSublist(File inputFile, File outputFile,int tuplesInBuffer, int tupleSize) throws IOException {
+		int diskRead = 0;
+		int diskWrite = 0;
 		try (ReadableByteChannel inChannel = Channels.newChannel(new FileInputStream(inputFile));
 				FileChannel outChannel = new FileOutputStream(outputFile).getChannel()) {
 			ByteBuffer buffer = ByteBuffer.allocateDirect(
@@ -464,7 +491,7 @@ public class Main {
 			byte[][] tuples = new byte[tuplesInBuffer][];
 			int counter = 0;
 			while (inChannel.read(buffer) > 0) {
-
+				diskRead++;
 				buffer.flip();
 				// read buffer
 				while (buffer.hasRemaining()) {
@@ -486,43 +513,19 @@ public class Main {
 					buffer.flip();
 					outChannel.write(buffer);
 					buffer.clear();
+					diskWrite++;
 					tuples = null;
 					tuples = new byte[tuplesInBuffer][];
 				}
 
 			}
 		}
+		System.out.println("Disk Read : "+diskRead);
+		System.out.println("Disk Write : "+diskWrite);
 	}
-	
-	private static void optimized(File inputFile1, File inputFile2, File outputFile) throws IOException {
-		try (FileInputStream in1 = new FileInputStream(inputFile1);
-				FileOutputStream out = new FileOutputStream(outputFile);) {
-
-			byte[] receive1 = new byte[Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH];
-			byte[] receive2;
-			while (in1.read(receive1) > 0) {
-				try (FileInputStream in2 = new FileInputStream(inputFile2)) {
-					 receive2 = new byte[Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH];
-					while (in2.read(receive2) > 0) {
-						if (bac.compare(receive1, receive2) == 0) {
-							System.out.println("equal");
-							out.write(combine(receive1, receive2));
-						}
-						receive2  = new byte[Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH];
-						
-					}
-
-				}
-				receive1=new byte[Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH];;
-			}
-
-		}
-	}
-	
-	
 	
 	private static void performNestedJoin(File inputFile1, File inputFile2, File outputFile) throws IOException {
-
+		
 		try (ReadableByteChannel inChannel1 = Channels.newChannel(new FileInputStream(inputFile1));
 				InputStream ins = new FileInputStream(inputFile2);
 				FileChannel outputChannel = new FileOutputStream(outputFile).getChannel();) {
@@ -588,14 +591,11 @@ public class Main {
 						tuplesT2 = null;
 						buffer2 = ByteBuffer.allocateDirect(Constants.T2_TUPPLES_IN_BUFFER_FOR_NESTED
 								* (Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH));
-						System.out.println("reading b2 again: "+(readt2++));
-
 					}
 				}
 				tuplesT1 = null;
 				buffer1 = ByteBuffer.allocateDirect(
 						Constants.T1_TUPPLES_IN_BUFFER_FOR_NESTED * (Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
-				System.out.println("read b1 again: "+(readt1++));
 			}
 
 			if (outputBuffer.position() > 0) {

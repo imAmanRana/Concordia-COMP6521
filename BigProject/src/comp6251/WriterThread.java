@@ -36,6 +36,7 @@ public class WriterThread implements Runnable {
 					break;
 				stream.write(tuples[i]);
 			}
+			stream.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
