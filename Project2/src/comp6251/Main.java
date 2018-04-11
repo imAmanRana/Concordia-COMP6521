@@ -37,12 +37,12 @@ public class Main {
 			switch (args[0]) {
 			case "1":
 				clearFile(new File(Constants.NESTEDJOIN_OUTPUT_FILE));
-				long start = System.nanoTime();
+				clearFile(new File(Constants.NESTED_GPA_FILE));
+				
 				performNestedJoin(new File(Constants.INPUT_FILE1), new File(Constants.INPUT_FILE2),
 						new File(Constants.NESTEDJOIN_OUTPUT_FILE));
-				//nestedGpaCalculation(new File(Constants.SORTEDJOIN_OUTPUT_FILE),new File(Constants.NESTED_GPA_FILE));
-				long end = System.nanoTime();
-				System.out.println("Sublist Sort : " + (end - start) / 1_000_000_000 + " seconds");
+				nestedGpaCalculation(new File(Constants.SORTEDJOIN_OUTPUT_FILE),new File(Constants.NESTED_GPA_FILE));
+				
 				break;
 			case "2":
 				clearFile(new File(Constants.INTERMEDIATE_T1));
@@ -57,9 +57,9 @@ public class Main {
 			case "4":
 				clearFile(new File(Constants.GRADES_FILE));
 				clearFile(new File(Constants.SORTEDJOIN_OUTPUT_FILE));
-				start = System.nanoTime();
+				long start = System.nanoTime();
 				performSortedJoin(new File(Constants.SORTED_T1),new File(Constants.SORTED_T2),new File(Constants.SORTEDJOIN_OUTPUT_FILE),new File(Constants.GRADES_FILE));
-				end = System.nanoTime();
+				long end = System.nanoTime();
 				System.out.println("Sorted Join : " + (end - start) / 1_000_000_000 + " seconds");
 				break;
 			default:
@@ -105,7 +105,7 @@ public class Main {
 			record2 = new byte[Constants.TUPPLE_SIZE_T2 + Constants.LINE_SEPARATOR_LENGTH];
 			
 			int oldStudentId=0;
-			int newStudentId;
+			int newStudentId=0;
 			int denominator=0;
 			float numerator = 0;
 			buffer2.get(record2);
@@ -122,13 +122,12 @@ public class Main {
 				buffer1.flip();
 				oldStudentId = getIntegerData(record1,0,8);
 				
-				
 				while (buffer1.hasRemaining() || bac.compare(record1, record2)==0) {					
 					int value = bac.compare(record1, record2);
-					
 					if (value == 0) // ids are equal
 					{
 						newStudentId = getIntegerData(record2,0,8);
+						
 						if(oldStudentId==newStudentId) {
 							int credit = getIntegerData(record2, 21, 2);
 							String grade = getStringData(record2, 23, 4);
@@ -181,6 +180,7 @@ public class Main {
 									/ (Constants.TUPPLE_SIZE_T1 + Constants.LINE_SEPARATOR_LENGTH));
 							buffer1.flip();
 							buffer1.get(record1);
+							oldStudentId = getIntegerData(record1,0,8);
 							diskRead++;
 
 						}
@@ -198,6 +198,41 @@ public class Main {
 					}
 				}
 			}
+			while(buffer2.hasRemaining()) {
+				buffer2.get(record2);
+				int value = bac.compare(record1, record2);
+				if(value==0) {
+					newStudentId = getIntegerData(record2,0,8);
+					
+					if(oldStudentId==newStudentId) {
+						int credit = getIntegerData(record2, 21, 2);
+						String grade = getStringData(record2, 23, 4);
+						numerator += credit*gradeToMarks(grade);
+						denominator+= credit;							
+					}
+					
+					if (outputBuffer.position() == outputBuffer.capacity()) {
+						outputBuffer.flip();
+						outChannel.write(outputBuffer);
+						outputBuffer.clear();
+						diskWrite++;
+					}
+					outputBuffer.put(combine(record1, record2));
+				}else if(value<0) {
+					if (buffer2.hasRemaining())
+						buffer2.get(record2); 
+					else {
+						buffer2.clear();
+						if(inChannel2.read(buffer2)<=0) {
+							break;
+						}
+						buffer2.flip();
+						buffer2.get(record2);
+						diskRead++;
+					}
+				}
+			}
+			
 			if (outputBuffer.position() > 0) {
 				outputBuffer.flip();
 				outChannel.write(outputBuffer);
@@ -248,7 +283,7 @@ public class Main {
 			marks = 3.3f;
 			break;
 		case "B":
-			marks = 0.0f;
+			marks = 3.0f;
 			break;
 		case "B-":
 			marks = 2.7f;
@@ -526,7 +561,10 @@ public class Main {
 	}
 	
 	private static void performNestedJoin(File inputFile1, File inputFile2, File outputFile) throws IOException {
-		
+		System.out.println("Nested Join");
+		long start = System.nanoTime();
+		int diskRead=0;
+		int diskWrite=0;
 		try (ReadableByteChannel inChannel1 = Channels.newChannel(new FileInputStream(inputFile1));
 				InputStream ins = new FileInputStream(inputFile2);
 				FileChannel outputChannel = new FileOutputStream(outputFile).getChannel();) {
@@ -543,6 +581,7 @@ public class Main {
 			byte[][] tuplesT1 = null;
 			byte[][] tuplesT2 = null;
 			outer: while (inChannel1.read(buffer1) > 0) {
+				diskRead++;
 				buffer1.flip();
 				counter = 0;
 				tuplesT1 = new byte[Constants.T1_TUPPLES_IN_BUFFER_FOR_NESTED][];
@@ -556,6 +595,7 @@ public class Main {
 
 				endLoopT1: try (ReadableByteChannel inChannel2 = Channels.newChannel(ins)) {
 					while (inChannel2.read(buffer2) > 0) {
+						diskRead++;
 						buffer2.flip();
 						counter = 0;
 						tuplesT2 = new byte[Constants.T2_TUPPLES_IN_BUFFER_FOR_NESTED][];
@@ -577,6 +617,7 @@ public class Main {
 								} else {
 									if (bac.compare(tuplesT1[i], tuplesT2[j]) == 0) {
 										if (outputBuffer.position() == outputBuffer.capacity()) {
+											diskWrite++;
 											outputBuffer.flip();
 											outputChannel.write(outputBuffer);
 											outputBuffer.clear();
@@ -601,8 +642,13 @@ public class Main {
 				outputBuffer.flip();
 				outputChannel.write(outputBuffer);
 				outputBuffer.clear();
+				diskWrite++;
 			}
 		}
+		long end = System.nanoTime();
+		System.out.println("Disk Read : "+diskRead);
+		System.out.println("Disk Write : "+diskWrite);
+		System.out.println("Time : " + (end - start) / 1_000_000_000 + " seconds");
 
 	}
 
@@ -666,12 +712,12 @@ public class Main {
 		try (ReadableByteChannel inChannel1 = Channels.newChannel(new FileInputStream(inputFile));
 				FileChannel outputChannel = new FileOutputStream(outputFile).getChannel()) {
 			ByteBuffer buffer = ByteBuffer
-					.allocateDirect((int) (((Constants.MEMORY_UTILIZATION*.01) * Constants.AVAILABLE_MEMORY) / (Constants.TUPPLE_SIZE_T3+Constants.LINE_SEPARATOR_LENGTH)));
+					.allocateDirect(Constants.T1_TUPPLES_IN_BUFFER_FOR_GRADE_CALCULATION_NESTED*(Constants.TUPPLE_SIZE_T3+Constants.LINE_SEPARATOR_LENGTH));
 			ByteBuffer outputBuffer = ByteBuffer
-					.allocateDirect((int) (((100-Constants.MEMORY_UTILIZATION)*.01) * Constants.AVAILABLE_MEMORY) / (Constants.TUPPLE_SIZE_GRADES+Constants.LINE_SEPARATOR_LENGTH));
+					.allocateDirect(Constants.T2_TUPPLES_IN_BUFFER_FOR_GRADE_CALCULATION_NESTED*(Constants.TUPPLE_SIZE_GRADES+Constants.LINE_SEPARATOR_LENGTH));
 			int diskWrite=0;
 			int oldStudentId=0;
-			int newStudentId;
+			int newStudentId=0;
 			int denominator=0;
 			float numerator = 0;
 			byte[] receive = null;
@@ -684,29 +730,60 @@ public class Main {
 				oldStudentId = getIntegerData(receive,0,8);
 				oldCredit = getIntegerData(receive, 113, 2);
 				oldGrade = getStringData(receive, 115, 4);
-				numerator += oldCredit*gradeToMarks(oldGrade);
-				denominator+= oldCredit;
-				while (buffer.hasRemaining()) {
+				if(oldStudentId==newStudentId) {
+					numerator += oldCredit*gradeToMarks(oldGrade);
+					denominator += oldCredit;
+				}else {
 					
-					buffer.get(receive);
-					newStudentId = getIntegerData(receive,0,8);
-					
-					if(oldStudentId==newStudentId) {
-						int credit = getIntegerData(receive, 113, 2);
-						String grade = getStringData(receive, 115, 4);
-						numerator += credit*gradeToMarks(grade);
-						denominator+= credit;
-					}else {
-						if (outputBuffer.position() == outputBuffer.capacity()) {
+					if (newStudentId != 0) {
+						if (outputBuffer.position() >= (int) (outputBuffer.capacity() * 0.95)) {
 							outputBuffer.flip();
 							outputChannel.write(outputBuffer);
 							outputBuffer.clear();
 							diskWrite++;
 						}
-						//outputBuffer.put(convertToBuffer(newStudentId, gpa));
+						outputBuffer.put(convertToBuffer(newStudentId,
+								String.format("%.2f", numerator / denominator).getBytes()));
+					}
+					numerator = oldCredit * gradeToMarks(oldGrade);
+					denominator = oldCredit;
+				}
+				
+				while (buffer.hasRemaining()) {
+					buffer.get(receive);
+					newStudentId = getIntegerData(receive,0,8);
+					int credit = getIntegerData(receive, 113, 2);
+					String grade = getStringData(receive, 115, 4);
+					if(oldStudentId==newStudentId) {
+						numerator += credit*gradeToMarks(grade);
+						denominator+= credit;
+					}else {
+						if (outputBuffer.position() >= (int)(outputBuffer.capacity()*0.95)) {
+							outputBuffer.flip();
+							outputChannel.write(outputBuffer);
+							outputBuffer.clear();
+							diskWrite++;
+						}
+						outputBuffer.put(convertToBuffer(oldStudentId, String.format("%.2f", numerator/denominator).getBytes()));
+						
+						oldStudentId = newStudentId;
+						numerator = credit*gradeToMarks(grade);
+						denominator = credit;
 					}
 				}
+				buffer.clear();
 			}
+			
+			if(denominator>0) {
+				outputBuffer.put(convertToBuffer(oldStudentId,String.format("%.2f", numerator/denominator).getBytes()));
+			}
+			if (outputBuffer.position() >0) {
+				outputBuffer.flip();
+				outputChannel.write(outputBuffer);
+				outputBuffer.clear();
+				diskWrite++;
+			}
+			System.out.println("Nested Query GPA Disk Write : "+diskWrite);
 		}
 	}
 }

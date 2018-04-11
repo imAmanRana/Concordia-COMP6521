@@ -17,8 +17,8 @@ public class Constants {
 	public static final int BLOCK_SIZE = 4096;
 	public static final int LINE_SEPARATOR_LENGTH = System.lineSeparator().getBytes().length;
 	
-	public static final String INPUT_FILE1 = "A:\\TEMP\\MiniProject2_6521\\MY_JoinT1.txt";
-	public static final String INPUT_FILE2 = "A:\\TEMP\\MiniProject2_6521\\MY_JoinT2.txt";
+	public static final String INPUT_FILE1 = "A:\\TEMP\\MiniProject2_6521\\demoJoinT1.txt";
+	public static final String INPUT_FILE2 = "A:\\TEMP\\MiniProject2_6521\\demoJoinT2.txt";
 	public static final String INTERMEDIATE_T1 = "A:\\TEMP\\MiniProject2_6521\\intermediateT1.txt";
 	public static final String INTERMEDIATE_T2 = "A:\\TEMP\\MiniProject2_6521\\intermediateT2.txt";
 	public static final String SORTED_T1 = "A:\\TEMP\\MiniProject2_6521\\sortedT1.txt";
@@ -38,6 +38,9 @@ public class Constants {
 	public static final int T1_TUPPLES_IN_BUFFER_FOR_NESTED = (int)((.40)*T1_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
 	public static final int T2_TUPPLES_IN_BUFFER_FOR_NESTED = (int)((.40)*T2_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
 	public static final int T3_TUPPLES_IN_BUFFER_FOR_NESTED = (int)((.20)*T3_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
+	
+	public static final int T1_TUPPLES_IN_BUFFER_FOR_GRADE_CALCULATION_NESTED = (int)((.70)*T3_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
+	public static final int T2_TUPPLES_IN_BUFFER_FOR_GRADE_CALCULATION_NESTED = (int)((.30)*GRADE_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
 	
 	public static final int T1_TUPPLES_IN_BUFFER_FOR_SORT = (int)(T1_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE));
 	public static final int T2_TUPPLES_IN_BUFFER_FOR_SORT = (int)((.60)*(T2_TUPPLES_IN_BLOCK*((double)AVAILABLE_MEMORY/BLOCK_SIZE)));
