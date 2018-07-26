@@ -1,4 +1,7 @@
-# Wontons
+# Advance Database Technology and Applications
+Course - COMP6521<br>
+Sort Based Bag Difference, TPMMS
+
 <b>Mini Project 1</b><br>
 Team Members<br>
 <ul>
