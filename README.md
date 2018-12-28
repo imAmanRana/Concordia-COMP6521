@@ -1,8 +1,6 @@
-# Advance Database Technology and Applications
-Course - COMP6521<br>
-Sort Based Bag Difference, TPMMS
+# COMP6521
+## Advance Database Technology and Applications
 
-<b>Mini Project 1</b><br>
 Team Members<br>
 <ul>
   <li>aman</li>
@@ -10,3 +8,13 @@ Team Members<br>
   <li>karanbir singh</li>
   <li>charanpreet singh</li>
 </ul>
+
+<b>Mini Project 1</b><br>
+Sort Based Bag Difference, TPMMS<br>
+
+<b>Mini Project 2</b><br>
+Nested Loop Join,Sort Based Join, TPMMS<br>
+
+
+Please adhere to your organization's rules for using this code.
+For [Concordia University](http://www.concordia.ca) ,these rules can be found [here](http://www.concordia.ca/students/academic-integrity/offences.html).
